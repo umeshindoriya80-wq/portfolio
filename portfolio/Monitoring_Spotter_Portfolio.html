@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Monitoring Spotter — Case Study</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg:#080808; --card:#111111; --card2:#1a1a1a; --border:#282828;
+    --white:#ffffff; --body:#999999; --muted:#555555; --muted2:#444444;
+    --accent:#a07df5; --accent2:#7c5cf0;
+    --cyan:#4fc3f7; --green:#34d399; --red:#f87171; --amber:#fbbf24;
+    --pad-x:clamp(20px, 5vw, 72px);
+    --pad-y:clamp(24px, 4vh, 52px);
+  }
+  html { -webkit-text-size-adjust:100%; }
+  body { background:var(--bg); font-family:'Segoe UI',system-ui,-apple-system,sans-serif; color:var(--white); overflow:hidden; }
+
+  .slide { width:100vw; height:100vh; display:none; flex-direction:column; padding:var(--pad-y) var(--pad-x); position:relative; }
+  .slide.active { display:flex; }
+
+  .eyebrow { font-size:clamp(10px,1.4vw,12px); letter-spacing:3px; color:var(--accent); font-weight:600; text-transform:uppercase; margin-bottom:14px; }
+  h1 { font-size:clamp(28px,5vw,50px); line-height:1.14; font-weight:700; max-width:1100px; }
+  h2 { font-size:clamp(22px,3.6vw,36px); line-height:1.2; font-weight:700; margin-bottom:6px; max-width:1100px; }
+  h3 { font-size:clamp(15px,1.9vw,19px); font-weight:700; }
+  .sub { font-size:clamp(14px,1.7vw,18px); color:var(--body); margin-top:14px; max-width:880px; line-height:1.55; }
+  .content { flex:1; display:flex; align-items:center; gap:clamp(20px,3.5vw,48px); margin-top:22px; min-height:0; }
+  .col-text { width:34%; font-size:clamp(13px,1.5vw,16px); color:var(--body); line-height:1.6; }
+  .col-vis { flex:1; min-width:0; height:100%; display:flex; align-items:center; justify-content:center; }
+  .divider { border:none; border-top:1px solid var(--border); margin:18px 0 0; width:100%; }
+  p.lead { font-size:clamp(14px,1.6vw,17px); color:var(--body); line-height:1.7; }
+  b.hl { color:var(--white); }
+
+  .pagenum { position:fixed; bottom:16px; right:22px; font-size:12px; color:var(--muted2); z-index:40; }
+  .hint { position:fixed; bottom:16px; left:22px; font-size:12px; color:var(--muted2); z-index:40; }
+
+  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:clamp(15px,2vw,22px); }
+  .card .klabel { font-size:11px; letter-spacing:2px; margin-bottom:8px; font-weight:700; text-transform:uppercase; }
+  ul.clean { list-style:none; }
+  ul.clean li { position:relative; padding-left:18px; margin:7px 0; font-size:clamp(13px,1.45vw,15px); color:var(--body); line-height:1.55; }
+  ul.clean li::before { content:""; position:absolute; left:2px; top:8px; width:6px; height:6px; border-radius:50%; background:var(--accent); }
+  ul.clean.green li::before { background:var(--green); }
+  ul.clean.red li::before { background:var(--red); }
+
+  .flowimg { max-width:100%; max-height:100%; object-fit:contain; border-radius:12px; border:1px solid var(--border); display:block; }
+  .placeholder { border:2px dashed var(--border); border-radius:14px; background:var(--card); flex-direction:column; align-items:center; justify-content:center; gap:8px; color:var(--muted2); text-align:center; padding:24px; font-size:13px; font-style:italic; }
+  .placeholder b { font-style:normal; font-size:13px; color:#8c87c0; letter-spacing:1px; display:block; }
+  .placeholder .ico { font-size:26px; opacity:.6; }
+  code { background:#22273e; padding:2px 7px; border-radius:5px; font-size:12px; color:#cdb4ff; font-family:'Cascadia Code',Consolas,monospace; }
+
+  .need { border:2px dashed #8a6d2b; border-radius:14px; background:#15130c; display:flex; flex-direction:column; gap:8px; color:#c9ae62; padding:clamp(14px,2vw,22px); font-size:13.5px; line-height:1.6; }
+  .need .tagline { font-size:11px; color:var(--amber); letter-spacing:2px; font-weight:700; }
+
+  .own { margin-top:auto; padding-top:12px; font-size:13px; color:#8c87c0; border-top:1px solid var(--border); }
+  .own b { color:var(--accent); letter-spacing:1px; font-size:11px; }
+
+  .tag { display:inline-block; font-size:11px; font-weight:700; letter-spacing:1.5px; padding:4px 10px; border-radius:20px; }
+  .tag.red { background:rgba(248,113,113,.12); color:var(--red); }
+  .tag.green { background:rgba(52,211,153,.12); color:var(--green); }
+  .tag.violet { background:rgba(167,139,250,.14); color:var(--accent); }
+  .vs { font-size:clamp(20px,3vw,30px); font-weight:800; color:var(--muted); align-self:center; padding:0 4px; }
+
+  svg text { font-family:'Segoe UI',system-ui,sans-serif; }
+
+  .notes { position:fixed; bottom:0; left:0; right:0; max-height:42vh; overflow-y:auto; background:#05060a; border-top:2px solid var(--accent); padding:18px var(--pad-x); font-size:14.5px; color:var(--body); line-height:1.65; display:none; z-index:50; }
+  .notes.show { display:block; }
+  .notes h4 { color:var(--accent); font-size:12px; letter-spacing:2px; margin-bottom:8px; }
+
+  body.overview { overflow:auto; }
+  body.overview .slide { display:flex !important; width:1280px; height:720px; transform:scale(0.31); transform-origin:top left; pointer-events:none; padding:42px 54px; }
+  body.overview .wrap { position:relative; width:397px; height:223px; overflow:hidden; border:1px solid var(--border); border-radius:10px; cursor:pointer; transition:border-color .15s, transform .15s; background:var(--bg); }
+  body.overview .wrap:hover { border-color:var(--accent); transform:translateY(-3px); }
+  body.overview .wrap .lbl { position:absolute; bottom:0; left:0; right:0; background:rgba(5,6,10,.85); color:var(--body); font-size:11px; padding:5px 10px; z-index:5; pointer-events:none; }
+  #grid { display:none; }
+  body.overview #grid { display:grid; grid-template-columns:repeat(3, 397px); gap:22px; padding:36px; justify-content:center; }
+  body.overview > .slide, body.overview .pagenum, body.overview .hint, body.overview .navbtn { display:none !important; }
+  body.overview #grid .slide { display:flex !important; }
+  body.overview .notes { display:none !important; }
+
+  .navbtn { position:fixed; top:50%; transform:translateY(-50%); width:42px; height:42px; border-radius:50%; background:rgba(167,139,250,.12); border:1px solid var(--border); color:var(--accent); font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:45; user-select:none; -webkit-tap-highlight-color:transparent; }
+  .navbtn:active { background:rgba(167,139,250,.28); }
+  #prev { left:14px; } #next { right:14px; }
+
+  @media (max-width:760px) {
+    body { overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; }
+    .slide { display:flex !important; width:100%; height:auto; min-height:100svh; border-bottom:1px solid var(--border); padding:38px 20px 54px; }
+    .content { flex-direction:column; align-items:stretch; gap:18px; }
+    .col-text, .col-vis { width:100% !important; height:auto; }
+    .col-vis svg { width:100%; height:auto; }
+    .navbtn, .hint { display:none; }
+    .pagenum { position:absolute; bottom:16px; right:16px; }
+    .notes { position:static; max-height:none; display:block; border-top:1px solid var(--border); border-radius:0 0 12px 12px; margin-top:22px; padding:18px 20px; background:#080a12; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns:1fr !important; }
+    .vs { padding:6px 0; }
+  }
+  @media (min-width:761px) { .mobile-only { display:none; } }
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:clamp(14px,2vw,22px); }
+  .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(14px,2vw,20px); }
+  .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:clamp(10px,1.4vw,14px); }
+</style>
+</head>
+<body>
+
+<!-- ════════════ 1 — TITLE ════════════ -->
+<section class="slide active">
+  <div class="eyebrow">Monitoring Spotter · Case Study · ThoughtSpot</div>
+  <div class="content" style="align-items:center;">
+    <div style="flex:1.3;">
+      <h1>Designing a layer for analysts to <span style="color:var(--accent)">“monitor”</span> Spotter.</h1>
+      <hr class="divider">
+      <p class="sub">After Spotter — ThoughtSpot's AI analyst — goes live, the analyst who owns it loses sight of it. This is the story of giving them one place to see how Spotter is performing in the real world, and to act on what they find.</p>
+      <div style="display:flex; flex-wrap:wrap; gap:clamp(24px,4vw,40px); margin-top:34px;">
+        <div><div style="font-size:13px;color:var(--muted2);letter-spacing:1px;">ROLE</div><div style="font-size:16px;margin-top:4px;">Lead UX Designer</div></div>
+        <div><div style="font-size:13px;color:var(--muted2);letter-spacing:1px;">TIMELINE</div><div style="font-size:16px;margin-top:4px;"><span style="color:var(--amber)">▢ add dates</span></div></div>
+        <div><div style="font-size:13px;color:var(--muted2);letter-spacing:1px;">SCOPE</div><div style="font-size:16px;margin-top:4px;">IA · Product Strategy · End-to-end UX</div></div>
+      </div>
+    </div>
+    <div class="col-vis" style="flex:1;">
+      <svg viewBox="0 0 260 230" style="width:clamp(160px,20vw,240px);">
+        <g fill="none" stroke="var(--accent)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M130 28 C108 14 78 20 70 44 C50 44 38 64 50 82 C36 96 44 120 66 120 C70 140 96 146 110 132 C118 144 142 144 150 130 C172 146 198 130 196 108 C214 96 208 70 188 66 C190 44 168 28 146 36 C142 28 136 26 130 28 Z"/>
+          <path d="M130 32 L130 130"/>
+          <path d="M100 56 C92 60 92 72 100 76"/><path d="M88 92 C80 96 82 108 92 110"/>
+          <path d="M160 56 C168 60 168 72 160 76"/><path d="M172 92 C180 96 178 108 168 110"/>
+          <path d="M100 130 L100 166 L80 166 L80 188"/>
+          <path d="M130 132 L130 178"/>
+          <path d="M160 130 L160 166 L180 166 L180 188"/>
+        </g>
+        <g fill="var(--accent)"><circle cx="80" cy="196" r="6"/><circle cx="130" cy="186" r="6"/><circle cx="180" cy="196" r="6"/></g>
+      </svg>
+    </div>
+  </div>
+  <div class="notes"><h4>SPEAKER NOTES</h4>Open on the reframe: Spotter is ThoughtSpot's flagship AI feature, but the person responsible for its accuracy goes blind the moment it ships. Monitoring is the layer that closes that loop. Keep the hook to one breath, then move into who Spotter is and why the gap matters.</div>
+</section>
+
+<!-- ════════════ 2 — WHAT IS SPOTTER + PROBLEM ════════════ -->
+<section class="slide">
+  <div class="eyebrow">Context</div>
+  <div class="content" style="align-items:stretch; gap:clamp(20px,3vw,40px);">
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+      <h2>What is Spotter?</h2>
+      <p class="lead" style="margin-top:12px;">Spotter is ThoughtSpot's <b class="hl">“AI Analyst.”</b> Business users ask questions in natural language and get charts and insights from their data.</p>
+      <ul class="clean" style="margin-top:14px;">
+        <li>The <b class="hl">analyst</b> enables Spotter for business users.</li>
+        <li>The analyst is responsible for training Spotter for <b class="hl">accuracy</b>.</li>
+      </ul>
+    </div>
+    <div style="flex:1.15; display:flex; flex-direction:column; justify-content:center;">
+      <h2 style="color:var(--red);">The problem</h2>
+      <p class="lead" style="margin-top:12px;">Once Spotter ships, the analyst has <b class="hl">no visibility</b> into how it's performing — no read on adoption or user satisfaction. They're left unsure whether it's working at all.</p>
+      <svg viewBox="0 0 640 250" style="width:100%; margin-top:14px; max-height:230px;">
+        <defs><marker id="aw" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="var(--body)"/></marker></defs>
+        <rect x="20" y="96" width="150" height="58" rx="11" fill="var(--card2)" stroke="var(--border)"/>
+        <text x="95" y="122" text-anchor="middle" fill="var(--white)" font-size="14" font-weight="700">Analyst / Admin</text>
+        <text x="95" y="140" text-anchor="middle" fill="var(--body)" font-size="10.5">enables Spotter</text>
+        <rect x="290" y="62" width="56" height="22" rx="11" fill="#1a3a2c" stroke="var(--green)"/>
+        <circle cx="335" cy="73" r="7.5" fill="var(--green)"/>
+        <rect x="262" y="96" width="112" height="58" rx="11" fill="#241b3d" stroke="var(--accent)"/>
+        <text x="318" y="130" text-anchor="middle" fill="var(--white)" font-size="15" font-weight="700">Spotter</text>
+        <rect x="466" y="96" width="154" height="58" rx="11" fill="var(--card2)" stroke="var(--border)"/>
+        <text x="543" y="122" text-anchor="middle" fill="var(--white)" font-size="13.5" font-weight="700">Business users</text>
+        <text x="543" y="140" text-anchor="middle" fill="var(--body)" font-size="10.5">ask Spotter questions</text>
+        <line x1="170" y1="125" x2="258" y2="125" stroke="var(--body)" stroke-width="2" marker-end="url(#aw)"/>
+        <line x1="374" y1="125" x2="462" y2="125" stroke="var(--body)" stroke-width="2" marker-end="url(#aw)"/>
+        <path d="M95,154 L95,205 L543,205 L543,156" fill="none" stroke="var(--red)" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#aw)" opacity=".75"/>
+        <g transform="translate(319,196)" stroke="var(--red)" stroke-width="2" fill="none" stroke-linecap="round">
+          <path d="M-14,0 C-8,-9 8,-9 14,0 C8,9 -8,9 -14,0 Z"/><circle cx="0" cy="0" r="3.4"/><line x1="-15" y1="-11" x2="15" y2="11"/>
+        </g>
+        <text x="319" y="232" text-anchor="middle" fill="var(--red)" font-size="12" font-weight="700" letter-spacing="1">NO VISIBILITY</text>
+      </svg>
+    </div>
+  </div>
+  <div class="notes"><h4>SPEAKER NOTES</h4>Two beats. First, what Spotter is — an AI analyst that answers business questions in natural language, enabled and "trained" by a human analyst. Second, the gap: the analyst is accountable for accuracy and adoption, but after launch the feedback loop is invisible. The eye-off in the diagram is the whole problem in one glance.</div>
+</section>
+
+<!-- ════════════ 3 — PROJECT DETAILS ════════════ -->
+<section class="slide">
+  <div class="eyebrow">Overview</div>
+  <h2>Project details</h2>
+  <hr class="divider">
+  <div class="content grid-3" style="align-items:stretch; gap:clamp(16px,2vw,22px);">
+    <div class="card" style="display:flex; flex-direction:column;">
+      <div class="klabel" style="color:var(--accent);">Project brief</div>
+      <p class="lead">After Spotter's release, the analyst has no visibility into how it's performing — no way to judge adoption or user satisfaction — leaving them unsure whether it's landing.</p>
+    </div>
+    <div class="card" style="display:flex; flex-direction:column;">
+      <div class="klabel" style="color:var(--accent);">My role</div>
+      <ul class="clean">
+        <li>Led design and user research — from problem framing to the final experience.</li>
+        <li>Collaborated with PMs, engineering, and the UX team to define and refine the designs.</li>
+      </ul>
+    </div>
+    <div class="card" style="display:flex; flex-direction:column; border-color:#1f4a3a;">
+      <div class="klabel" style="color:var(--green);">Final design output</div>
+      <ul class="clean green">
+        <li>Defined the <b class="hl">IA for monitoring all Spotter activity</b> in ThoughtSpot.</li>
+        <li>Designed the end-to-end experience for <b class="hl">tracking, assessing, and refining</b> Spotter. <span style="color:var(--amber)">▢ confirm wording</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="notes"><h4>SPEAKER NOTES</h4>Quick orientation slide for a reviewer: the brief in one line, what I owned (design + research end-to-end, plus cross-functional collaboration), and the two-part output — the information architecture for monitoring, and the shipped experience. The last bullet was cut off in your source; confirm the exact phrasing.</div>
+</section>
+
+<!-- ════════════ 4 — MONITORING CONCEPT ════════════ -->
+<section class="slide">
+  <div class="eyebrow">Framing the space</div>
+  <h2>What does “monitoring” actually mean?</h2>
+  <p class="sub">Monitoring is how you <b class="hl">observe (track), assess, and continuously refine</b> your AI assistant.</p>
+  <div class="content" style="justify-content:center;">
+    <svg viewBox="0 0 760 230" style="width:100%; max-width:860px; max-height:100%;">
+      <defs><marker id="a4" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="var(--muted)"/></marker></defs>
+      <!-- Observe / Track -->
+      <g transform="translate(120,70)" fill="none" stroke="var(--cyan)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M-30,0 C-18,-18 18,-18 30,0 C18,18 -18,18 -30,0 Z"/><circle cx="0" cy="0" r="8"/><circle cx="0" cy="0" r="2.5" fill="var(--cyan)" stroke="none"/>
+        <line x1="0" y1="-26" x2="0" y2="-32"/><line x1="22" y1="-16" x2="27" y2="-21"/><line x1="-22" y1="-16" x2="-27" y2="-21"/>
+      </g>
+      <text x="120" y="128" text-anchor="middle" fill="var(--cyan)" font-size="15" font-weight="700">Observe / Track</text>
+      <line x1="200" y1="64" x2="300" y2="64" stroke="var(--muted)" stroke-width="2" marker-end="url(#a4)"/>
+      <!-- Assess / Analyse -->
+      <g transform="translate(380,70)" fill="none" stroke="var(--amber)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="-4" cy="-4" r="22"/><path d="M-4,-4 m-9,0 a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0" stroke-width="2.2"/><circle cx="-4" cy="-4" r="2.4" fill="var(--amber)" stroke="none"/>
+        <line x1="13" y1="13" x2="26" y2="26" stroke-width="4"/>
+      </g>
+      <text x="380" y="128" text-anchor="middle" fill="var(--amber)" font-size="15" font-weight="700">Assess / Analyse</text>
+      <line x1="460" y1="64" x2="560" y2="64" stroke="var(--muted)" stroke-width="2" marker-end="url(#a4)"/>
+      <!-- Action / Refine -->
+      <g transform="translate(640,70)" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="0" cy="0" r="22"/><path d="M-9,1 L-2,9 L11,-7" stroke-width="3.4"/>
+        <circle cx="0" cy="-26" r="4" fill="var(--green)" stroke="none"/><circle cx="23" cy="11" r="4" fill="var(--green)" stroke="none"/><circle cx="-23" cy="11" r="4" fill="var(--green)" stroke="none"/>
+        <line x1="0" y1="-22" x2="0" y2="-26"/><line x1="19" y1="9" x2="23" y2="11"/><line x1="-19" y1="9" x2="-23" y2="11"/>
+      </g>
+      <text x="640" y="128" text-anchor="middle" fill="var(--green)" font-size="15" font-weight="700">Action / Refine</text>
+    </svg>
+  </div>
+  <div class="notes"><h4>SPEAKER NOTES</h4>Before designing anything, I defined the verb. Monitoring isn't a dashboard — it's a loop: observe what's happening, assess what it means, then act to refine. These three modes (track → assess → refine) became the backbone of every layout decision that follows.</div>
+</section>
+
+<!-- ════════════ 5 — MONITORING SPACE + LOOP ════════════ -->
+<section class="slide">
+  <div class="eyebrow">Framing the space</div>
+  <h2>The space where teams track Spotter after it goes live.</h2>
+  <div class="content" style="flex-direction:column; align-items:stretch; gap:clamp(12px,1.6vh,18px);">
+    <div class="grid-2" style="gap:clamp(16px,3vw,40px); align-items:start;">
+      <div>
+        <div style="font-size:12px; color:var(--muted2); letter-spacing:2px; font-weight:700; margin-bottom:8px;">GOALS</div>
+        <div style="display:flex; flex-direction:column; gap:7px;">
+          <div style="display:flex; gap:10px; font-size:clamp(12.5px,1.4vw,14.5px); line-height:1.45;"><b style="color:var(--cyan); min-width:120px;">Observe / Track</b><span style="color:var(--body);">Understand how users are interacting with Spotter.</span></div>
+          <div style="display:flex; gap:10px; font-size:clamp(12.5px,1.4vw,14.5px); line-height:1.45;"><b style="color:var(--amber); min-width:120px;">Assess / Analyse</b><span style="color:var(--body);">Identify failures, gaps, or coaching needs.</span></div>
+          <div style="display:flex; gap:10px; font-size:clamp(12.5px,1.4vw,14.5px); line-height:1.45;"><b style="color:var(--green); min-width:120px;">Action / Refine</b><span style="color:var(--body);">Decide what to update to improve accuracy and adoption over time.</span></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px; color:var(--muted2); letter-spacing:2px; font-weight:700; margin-bottom:8px;">WHAT MONITORING REVEALS</div>
+        <ul class="clean" style="columns:1;">
+          <li>How Spotter is behaving in real-world usage.</li>
+          <li>What users are asking — and how well Spotter answers.</li>
+          <li>Whether the initial coaching (context, business terms, reference Q&amp;A) is holding up.</li>
+          <li>When and where Spotter needs further coaching or fixes.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-vis" style="height:auto; flex:none; margin-top:4px;">
+      <svg viewBox="0 0 760 300" style="width:100%; max-width:900px; max-height:38vh;">
+        <defs><marker id="a5" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="var(--body)"/></marker></defs>
+        <!-- coaching box -->
+        <rect x="24" y="120" width="256" height="92" rx="12" fill="none" stroke="var(--border)" stroke-dasharray="6 5"/>
+        <rect x="46" y="150" width="92" height="42" rx="8" fill="var(--card2)" stroke="var(--border)"/><text x="92" y="176" text-anchor="middle" fill="var(--white)" font-size="12" font-weight="600">Data Model</text>
+        <text x="152" y="177" text-anchor="middle" fill="var(--accent)" font-size="20" font-weight="700">+</text>
+        <rect x="166" y="150" width="92" height="42" rx="8" fill="var(--card2)" stroke="var(--border)"/><text x="212" y="172" text-anchor="middle" fill="var(--white)" font-size="11.5" font-weight="600">Set up</text><text x="212" y="186" text-anchor="middle" fill="var(--white)" font-size="11.5" font-weight="600">Spotter</text>
+        <text x="152" y="230" text-anchor="middle" fill="var(--muted2)" font-size="11" letter-spacing="1">ANALYST COACHING</text>
+        <!-- monitor bar -->
+        <rect x="372" y="120" width="58" height="120" rx="9" fill="#241b3d" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="401" y="184" text-anchor="middle" fill="var(--white)" font-size="13" font-weight="700" transform="rotate(-90 401 184)">Monitor</text>
+        <!-- track/assess/refine -->
+        <rect x="462" y="120" width="150" height="34" rx="8" fill="var(--card2)" stroke="var(--border)"/><text x="537" y="142" text-anchor="middle" fill="var(--cyan)" font-size="12.5" font-weight="700">Track</text>
+        <rect x="462" y="162" width="150" height="42" rx="8" fill="var(--card2)" stroke="var(--border)"/><text x="537" y="180" text-anchor="middle" fill="var(--amber)" font-size="12.5" font-weight="700">Assess</text><text x="537" y="195" text-anchor="middle" fill="var(--body)" font-size="9.5">analyse → actionable insight</text>
+        <rect x="462" y="212" width="150" height="30" rx="8" fill="var(--card2)" stroke="var(--border)"/><text x="537" y="231" text-anchor="middle" fill="var(--green)" font-size="12.5" font-weight="700">Refine</text>
+        <line x1="430" y1="137" x2="458" y2="137" stroke="var(--body)" stroke-width="1.6" marker-end="url(#a5)"/>
+        <line x1="537" y1="156" x2="537" y2="160" stroke="var(--body)" stroke-width="1.6" marker-end="url(#a5)"/>
+        <line x1="537" y1="206" x2="537" y2="210" stroke="var(--body)" stroke-width="1.6" marker-end="url(#a5)"/>
+        <!-- top arc: user interaction -->
+        <path d="M152,120 L152,88 L537,88 L537,118" fill="none" stroke="var(--cyan)" stroke-width="1.5" marker-end="url(#a5)" opacity=".85"/>
+        <text x="345" y="80" text-anchor="middle" fill="var(--cyan)" font-size="11" font-weight="600">User interaction</text>
+        <!-- bottom arc: changes push to coaching -->
+        <path d="M537,242 L537,272 L152,272 L152,214" fill="none" stroke="var(--green)" stroke-width="1.5" marker-end="url(#a5)" opacity=".85"/>
+        <text x="345" y="290" text-anchor="middle" fill="var(--green)" font-size="11" font-weight="600">Changes push back to coaching</text>
+      </svg>
+    </div>
+  </div>
+  <div class="notes"><h4>SPEAKER NOTES</h4>This is the system view. The analyst first coaches Spotter (data model + setup). Then users interact with it. Monitoring watches that interaction through three lenses — track, assess, refine — and the refinements feed straight back into coaching. It's a closed loop, not a static report. The right-hand list is what that loop actually surfaces.</div>
+</section>
+
+<!-- ════════════ 6 — CURRENT PRODUCT + GAP ════════════ -->
+<section class="slide">
+  <div class="eyebrow">Audit · What exists today</div>
+  <h2>Some visibility exists — but it's <span style="color:var(--red);">fragmented</span>.</h2>
+  <div class="content" style="flex-direction:column; align-items:stretch; gap:clamp(14px,2vh,20px);">
+    <div class="grid-2">
+      <div class="card">
+        <h3>Analyst Liveboard</h3>
+        <ul class="clean" style="margin-top:8px;">
+          <li>Key engagement &amp; adoption metrics — as <b class="hl">raw tabular data</b>.</li>
+          <li>Read-only. No deep-dive, no actions.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Spotter coaching</h3>
+        <ul class="clean" style="margin-top:8px;">
+          <li>Reference questions &amp; business terms added by analysts and suggested by business users.</li>
+          <li><span style="color:var(--red);">Low adoption.</span></li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:12px; color:var(--muted2); letter-spacing:2px; font-weight:700; margin-bottom:10px;">MAPPING CURRENT USER JOURNEYS — VISIBILITY IS SCATTERED ACROSS 4 PLACES</div>
+      <div class="grid-4">
+        <div class="card" style="padding:14px; text-align:center;"><div style="font-size:11px; color:var(--red); font-weight:700;">LOCATION A</div><div style="font-size:13.5px; margin-top:6px;">Enable Spotter</div></div>
+        <div class="card" style="padding:14px; text-align:center;"><div style="font-size:11px; color:var(--red); font-weight:700;">LOCATION B</div><div style="font-size:13.5px; margin-top:6px;">Adoption Liveboard</div></div>
+        <div class="card" style="padding:14px; text-align:center;"><div style="font-size:11px; color:var(--red); font-weight:700;">LOCATION C</div><div style="font-size:13.5px; margin-top:6px;">Coaching management</div></div>
+        <div class="card" style="padding:14px; text-align:center;"><div style="font-size:11px; color:var(--red); font-weight:700;">LOCATION D</div><div style="font-size:13.5px; margin-top:6px;">Add coaching (chat)</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="notes"><h4>SPEAKER NOTES</h4>It's not that there's zero visibility — it's that the pieces are scattered. Metrics live in a read-only Liveboard, coaching lives somewhere else, enabling Spotter is somewhere else again, and adding coaching happens in chat. Four locations, no single place to see or act. That fragmentation is the real design problem.</div>
+</section>
+
+<!-- ════════════ 7 — DECISION 1: SCOPE ════════════ -->
+<section class="slide">
+  <div class="eyebrow">Decision 1 of 3 — Defining scope</div>
+  <h2>Two problems to solve at once.</h2>
+  <div class="content grid-2" style="align-items:stretch;">
+    <div class="card" style="border-color:#1f3a5a; display:flex; flex-direction:column;">
+      <span class="tag violet" style="align-self:flex-start;">THE STRUCTURE</span>
+      <h3 style="margin-top:12px;">Solve the IA — one pane of glass</h3>
+      <ul class="clean" style="margin-top:10px;">
+        <li>Bring every scattered surface into one place.</li>
+        <li>Directly answers the fragmentation problem.</li>
+      </ul>
+    </div>
+    <div class="card" style="border-color:#1f4a3a; display:flex; flex-direction:column;">
+      <span class="tag green" style="align-self:flex-start;">THE PROCESS</span>
+      <h3 style="margin-top:12px;">Solve the monitoring process</h3>
+      <ul class="clean green" style="margin-top:10px;">
+        <li>Choose the right signals to monitor.</li>
+        <li>Help the analyst assess what they're seeing.</li>
+        <li>Help them take a meaningful action on it.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="notes"><h4>SPEAKER NOTES</h4>The first decision was framing the scope as two linked problems, not one. Structure: an information architecture that unifies the scattered surfaces into a single pane of glass. Process: the actual track → assess → act workflow inside it. Solving one without the other would have failed — a tidy IA with no workflow, or a workflow with nowhere to live.</div>
+</section>
+
+<!-- ════════════ 8 — IMAGE: FULL PRODUCT FLOW ════════════ -->
+<section class="slide">
+  <div class="eyebrow">IA Exploration · 1 of 4</div>
+  <h2>Mapping the full product flow.</h2>
+  <p class="sub">Laying out every monitoring touchpoint — tracking, assessment, and refine/action — across coaching input, user feedback, conversation logs, and the metrics Liveboard.</p>
+  <div class="content" style="margin-top:14px;">
+    <div class="col-vis">
+      <img class="flowimg" src="images/08-full-product-flow.png" alt="Full product user flow mapping" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div class="placeholder" style="width:100%; height:100%;"><div class="ico">🗺</div><b>IMAGE — Full product flow (blurred OK)</b>Export from Figma → save as <code>portfolio/images/08-full-product-flow.png</code></div>
+    </div>
+  </div>
+  <div class="notes"><h4>SPEAKER NOTES</h4>Step one of the IA work: map the entire surface. This board lays the three monitoring modes (track / assess / refine) against every input source. It's intentionally exhaustive — the goal here was to see the whole problem before deciding what to cut. Walk the reviewer through one column to show the depth, then move on.</div>
+</section>
+
+<!-- ════════════ 9 — IMAGE: USER vs ANALYST FLOW ════════════ -->
+<section class="slide">
+  <div class="eyebrow">IA Exploration · 2 of 4</div>
+  <h2>Where user actions become analyst actions.</h2>
+  <p class="sub">Tracing both sides of the loop: what a business user does in a conversation (feedback, thumbs, save) and how that surfaces on the analyst side as something to review and act on.</p>
+  <div class="content" style="margin-top:14px;">
+    <div class="col-vis">
+      <img class="flowimg" src="images/09-user-analyst-flow.png" alt="User side and analyst side flow" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div class="placeholder" style="width:100%; height:100%;"><div class="ico">🔀</div><b>IMAGE — User ↔ Analyst flow</b>Export from Figma → save as <code>portfolio/images/09-user-analyst-flow.png</code></div>
+    </div>
+  </div>
+  <div class="notes"><h4>SPEAKER NOTES</h4>The key realization: most signals start on the user side (a thumbs-down, a saved chat, a comment) but the actionable response lives on the analyst side. Some objects are insight-only (a Liveboard), others are directly actionable (coaching). Mapping which is which told us where to put actions versus where to just surface information.</div>
+</section>
+
+<!-- ════════════ 10 — IMAGE: FEATURE GROUPINGS ════════════ -->
+<section class="slide">
+  <div class="eyebrow">IA Exploration · 3 of 4</div>
+  <h2>Grouping signals into features.</h2>
+  <p class="sub">Clustering the mapped signals into four candidate features — Liveboard overview, User-feedback Action Center, Review user coaching, and the Analyst Coaching Tracker — each tied to track, assess, or refine.</p>
+  <div class="content" style="margin-top:14px;">
+    <div class="col-vis">
+      <img class="flowimg" src="images/10-feature-groupings.png" alt="Feature groupings" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div class="placeholder" style="width:100%; height:100%;"><div class="ico">🧩</div><b>IMAGE — Feature groupings</b>Export from Figma → save as <code>portfolio/images/10-feature-groupings.png</code></div>
+    </div>
+  </div>
+  <div class="notes"><h4>SPEAKER NOTES</h4>From a messy map to four coherent features. This is where the IA starts to feel like a product: each cluster has a clear job — overview to track, Action Center to investigate, coaching review to approve, tracker to audit. The annotations on the right call out where growth and coaching signals originate.</div>
+</section>
+
+<!-- ════════════ 11 — IMAGE: IA OPTIONS A/B ════════════ -->
+<section class="slide">
+  <div class="eyebrow">IA Exploration · 4 of 4</div>
+  <h2>Two ways to structure it — Option A vs Option B.</h2>
+  <p class="sub">Pressure-testing two information architectures for the same feature set before committing — one flatter, one with a dedicated “Monitor / Configure Spotter” container and explicit access levels.</p>
+  <div class="content" style="margin-top:14px;">
+    <div class="col-vis">
+      <img class="flowimg" src="images/11-ia-options-ab.png" alt="IA options A and B" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div class="placeholder" style="width:100%; height:100%;"><div class="ico">⚖️</div><b>IMAGE — IA options: Option A vs Option B</b>Export from Figma → save as <code>portfolio/images/11-ia-options-ab.png</code></div>
+    </div>
+  </div>
+  <div class="notes"><h4>SPEAKER NOTES</h4>I never present a single option as inevitable. Here are two structures for the same features — A keeps things flatter; B introduces a dedicated monitor/configure container with explicit user-vs-analyst access. Comparing them out loud (ownership, scalability, access control) is what made the eventual choice defensible.</div>
+</section>
+
+<!-- ════════════ 12 — DECISION 2: LIMIT SCOPE FOR V1 ════════════ -->
+<section class="slide">
+  <div class="eyebrow">Decision 2 of 3 — Scope for V1</div>
+  <h2>Limiting scope for V1.</h2>
+  <p class="sub">We deliberately constrained the first version — to ship the monitoring capability fast and to avoid over-investing in an area that was still moving.</p>
+  <div class="content grid-2" style="align-items:stretch;">
+    <div class="card" style="display:flex; flex-direction:column;">
+      <h3>Urgency of the project</h3>
+      <ul class="clean" style="margin-top:10px;">
+        <li>V1 would give us enough feedback to expand monitoring in the next phases.</li>
+        <li>Positive pressure from the team to ship the monitoring capability faster.</li>
+      </ul>
+    </div>
+    <div class="card" style="display:flex; flex-direction:column; border-color:#4a3a25;">
+      <h3>Uncertainty of manual coaching</h3>
+      <ul class="clean" style="margin-top:10px;">
+        <li>We weren't sure yet how large the coaching flow would become.</li>
+        <li>Discussions about <b class="hl">“Memory”</b> — a new form of coaching — meant we were unsure how much to invest here.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="notes"><h4>SPEAKER NOTES</h4>Senior signal: knowing what not to build. Two reasons we capped V1. One, urgency — shipping sooner gets real feedback that de-risks later phases. Two, uncertainty — the coaching surface was about to change with "Memory" (the sibling project), so over-designing coaching now would have been wasted. We scoped to learn, not to be complete.</div>
+</section>
+
+<!-- ════════════ 13 — IMAGE: BASIC IA (DATA MODEL LEVEL) ════════════ -->
+<section class="slide">
+  <div class="eyebrow">Architecture</div>
+  <h2>Basic IA at the data-model level.</h2>
+  <p class="sub">The structure underneath: a Monitor group (Liveboard overview, feedback from conversation) and an All-Coaching group (user coaching, analyst coaching) — each with its tracked metrics and signals.</p>
+  <div class="content" style="margin-top:14px;">
+    <div class="col-vis">
+      <img class="flowimg" src="images/13-basic-ia-data-model.png" alt="Basic IA at data model level" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div class="placeholder" style="width:100%; height:100%;"><div class="ico">🏗</div><b>IMAGE — Basic IA (data-model level)</b>Export from Figma → save as <code>portfolio/images/13-basic-ia-data-model.png</code></div>
+    </div>
+  </div>
+  <div class="notes"><h4>SPEAKER NOTES</h4>This is the concrete IA at the data-model level: Monitor (overview + conversation feedback) on one side, All Coaching (user-sourced and analyst-sourced) on the other, with the specific signals each one tracks — active users, conversation counts, reference questions, business terms. This is the skeleton the shipped screens hang on.</div>
+</section>
+
+<!-- ════════════ 14 — DECISION 3: WHERE MONITORING LIVES ════════════ -->
+<section class="slide">
+  <div class="eyebrow">Decision 3 of 3 — Where monitoring lives</div>
+  <h2>Monitor per data model, or one central level?</h2>
+  <div class="content" style="align-items:stretch; gap:clamp(12px,2vw,24px);">
+    <div class="card" style="flex:1; display:flex; flex-direction:column; border-color:#4a2530;">
+      <h3>Monitor at each data model</h3>
+      <p style="font-size:13px; color:var(--body); margin-top:6px;">Each data model gets its own Spotter monitor page.</p>
+      <div style="color:var(--green); font-weight:700; font-size:12px; letter-spacing:1px; margin-top:14px;">PROS</div>
+      <ul class="clean green" style="margin-top:6px;"><li>Ease of management — data &amp; monitoring sit at the same level.</li><li>Better security — access scoped to that data model's admin.</li></ul>
+      <div style="color:var(--red); font-weight:700; font-size:12px; letter-spacing:1px; margin-top:12px;">CONS</div>
+      <ul class="clean red" style="margin-top:6px;"><li>Doesn't scale for anyone managing adoption across many data models.</li><li>Not future-proof — the page clutters as monitoring grows.</li></ul>
+    </div>
+    <div class="vs">VS</div>
+    <div class="card" style="flex:1; display:flex; flex-direction:column; border-color:#1f4a3a; position:relative;">
+      <span class="tag green" style="position:absolute; top:14px; right:14px;">✓ CHOSEN</span>
+      <h3>Monitor at a central level <span style="color:var(--green);">(across data models)</span></h3>
+      <p style="font-size:13px; color:var(--body); margin-top:6px;">A single pane of glass for all data models.</p>
+      <div style="color:var(--green); font-weight:700; font-size:12px; letter-spacing:1px; margin-top:14px;">PROS</div>
+      <ul class="clean green" style="margin-top:6px;"><li>Scalable for more features.</li><li>Maps signals across data models — better insight.</li><li>One place for all Spotter activity across ThoughtSpot.</li></ul>
+      <div style="color:var(--red); font-weight:700; font-size:12px; letter-spacing:1px; margin-top:12px;">CONS</div>
+      <ul class="clean red" style="margin-top:6px;"><li>Enabling Spotter is still controlled from the data model — monitor sits on a different page.</li></ul>
+    </div>
+  </div>
+  <div class="notes"><h4>SPEAKER NOTES</h4>The pivotal architecture call. Per-model monitoring is easy to manage and naturally secure, but it collapses the moment one analyst owns several data models — and it doesn't scale as we add features. The central "one pane of glass" wins on scalability and cross-model insight. The one tradeoff we accepted: enabling Spotter stays on the data-model page, separate from monitoring.</div>
+</section>
+
+<!-- ════════════ 15 — IMAGE: CHOSEN CENTRAL APPROACH ════════════ -->
+<section class="slide">
+  <div class="eyebrow">The call</div>
+  <h2>One monitor, across all data models.</h2>
+  <p class="sub">The chosen approach: an account/admin-level monitor that spans every data model (✓), rather than a separate monitor buried inside each one (✕).</p>
+  <div class="content" style="margin-top:14px;">
+    <div class="col-vis">
+      <img class="flowimg" src="images/15-monitor-central-approach.png" alt="Monitor one central level across all data models" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div class="placeholder" style="width:100%; height:100%;"><div class="ico">🎯</div><b>IMAGE — Chosen approach: one central monitor</b>Export from Figma → save as <code>portfolio/images/15-monitor-central-approach.png</code></div>
+    </div>
+  </div>
+  <div class="notes"><h4>SPEAKER NOTES</h4>The decision visualized. Green = the chosen account/admin-level monitor that sits above all data models; red = the rejected per-model monitoring buried in each data workspace. Coaching and setup stay collaborative at the data-model level, but the monitoring lens lifts up to one central place. This is the spine of the shipped product.</div>
+</section>
+
+<!-- ════════════ 16 — DECIDED FLOWS FOR V1 ════════════ -->
+<section class="slide">
+  <div class="eyebrow">V1 Scope · What we shipped</div>
+  <h2>Decided flows to solve for V1.</h2>
+  <div class="content grid-2" style="align-items:stretch;">
+    <div class="card" style="display:flex; flex-direction:column;">
+      <h3>Metric Liveboard</h3>
+      <ul class="clean" style="margin-top:10px;">
+        <li>Study data-level signals in a dashboard.</li>
+        <li>Customised org to org — so we just had to add the page for the Liveboard.</li>
+      </ul>
+    </div>
+    <div class="card" style="display:flex; flex-direction:column; border-color:#1f4a3a;">
+      <h3>Monitoring all user conversations</h3>
+      <p style="font-size:13px; color:var(--body); line-height:1.6; margin-top:8px; font-style:italic;">“As an analyst, I want to review all user conversations in one place — so I can spot problematic interactions, investigate feedback or drop-offs, and take direct action like adding coaching, without switching tools or relying on static dashboards.”</p>
+      <div style="font-size:11px; color:var(--green); letter-spacing:2px; font-weight:700; margin-top:14px;">SOLVE UX FLOWS FOR</div>
+      <ul class="clean green" style="margin-top:6px;">
+        <li>Finding the right conversation.</li>
+        <li>Assessing the conversation.</li>
+        <li>Taking action.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="notes"><h4>SPEAKER NOTES</h4>What V1 actually committed to. Two flows. The metric Liveboard was relatively cheap — orgs customise it, so we just gave it a home. The real design work was monitoring conversations: one place to find a problematic conversation, assess what went wrong, and act on it directly. Those three sub-flows — find, assess, act — are the heart of the shipped experience, and where the next slides should go deep.</div>
+</section>
+
+<!-- ════════════ 17 — SHIPPED: ALL CHATS (FIND) ════════════ -->
+<section class="slide">
+  <div class="eyebrow">Shipped · Flow 1 — Finding the right conversation</div>
+  <h2>"All chats" — 500 conversations. The right one in two clicks.</h2>
+  <div class="content" style="gap:clamp(20px,3vw,44px); align-items:stretch;">
+    <div class="col-vis" style="flex:1.5;">
+      <img class="flowimg" src="images/17-all-chats.png" alt="All chats screen" style="max-height:76vh;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div class="placeholder" style="width:100%; height:clamp(300px,68vh,540px);"><div class="ico">📋</div><b>IMAGE — All chats (shipped)</b>Export from Figma → save as <code>portfolio/images/17-all-chats.png</code></div>
+    </div>
+    <div class="col-text" style="width:30%; display:flex; flex-direction:column; justify-content:center; gap:16px;">
+      <div class="card" style="padding:16px 18px;">
+        <div class="klabel" style="color:var(--accent); margin-bottom:6px;">LOCATION</div>
+        <p style="font-size:13px; color:var(--body); line-height:1.55;">Lives under <b class="hl">Monitor Spotter → All chats</b> in the Data Workspace nav — the central monitoring surface chosen in Decision 3.</p>
+      </div>
+      <div class="card" style="padding:16px 18px;">
+        <div class="klabel" style="color:var(--accent); margin-bottom:6px;">KEY DESIGN DECISIONS</div>
+        <ul class="clean" style="margin-top:2px;">
+          <li><b class="hl">Table, not cards</b> — analysts scan across 500 rows; a table lets them filter and sort without opening anything.</li>
+          <li><b class="hl">Signal columns at a glance</b> — follow-ups, thumbs up/down count, feedback category, model, and author visible before clicking in.</li>
+          <li><b class="hl">Filter by model</b> — an analyst managing multiple data models stays in one place and filters down.</li>
+        </ul>
+      </div>
+      <div class="own"><b>THE PROBLEM IT SOLVES</b> — Instead of trawling through individual chat logs in Spotter, the analyst sees all conversations with quality signals surfaced at the list level.</div>
+    </div>
+  </div>
+  <div class="notes"><h4>SPEAKER NOTES</h4>The first shipped flow: finding the right conversation to investigate. The table shows 500 conversations with feedback signals already visible — thumbs down count, feedback category, follow-ups — so the analyst doesn't have to open anything to know where to look. Model filter lets them stay in one place across their whole data model portfolio. The design decision that mattered most: a table over cards, because at 500 rows you need to scan, not browse. And every column earns its place — no "nice to have" columns; each one is a signal the analyst uses to decide what to investigate next.</div>
+</section>
+
+<!-- ════════════ 18 — SHIPPED: CONVERSATION DETAIL (ASSESS + ACT) ════════════ -->
+<section class="slide">
+  <div class="eyebrow">Shipped · Flow 2 &amp; 3 — Assessing and acting</div>
+  <h2>Open a conversation. See the failure. Fix it — without leaving.</h2>
+  <div class="content" style="gap:clamp(20px,3vw,44px); align-items:stretch;">
+    <div class="col-vis" style="flex:1.4;">
+      <img class="flowimg" src="images/18-conversation-detail.png" alt="Conversation detail modal" style="max-height:76vh;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div class="placeholder" style="width:100%; height:clamp(300px,68vh,540px);"><div class="ico">💬</div><b>IMAGE — Conversation detail (shipped)</b>Export from Figma → save as <code>portfolio/images/18-conversation-detail.png</code></div>
+    </div>
+    <div class="col-text" style="width:32%; display:flex; flex-direction:column; justify-content:center; gap:16px;">
+      <div class="card" style="padding:16px 18px;">
+        <div class="klabel" style="color:var(--red); margin-bottom:6px;">WHAT THE ANALYST SEES</div>
+        <ul class="clean red" style="margin-top:2px;">
+          <li>The full conversation thread — including the chart Spotter generated.</li>
+          <li>The downvote bubble surfaced <b class="hl">in context</b>, right below the failing answer — with category tags and the user's comment.</li>
+        </ul>
+      </div>
+      <div class="card" style="padding:16px 18px; border-color:#1f4a3a;">
+        <div class="klabel" style="color:var(--green); margin-bottom:6px;">WHAT THEY CAN DO</div>
+        <ul class="clean green" style="margin-top:2px;">
+          <li><b class="hl">+ Add to coaching</b> — inline action on the answer that failed, without switching context.</li>
+          <li>Read the user's exact comment (<em>"Answer is not showing accurate data"</em>) before deciding what coaching to add.</li>
+        </ul>
+      </div>
+      <div class="card" style="padding:16px 18px;">
+        <div class="klabel" style="color:var(--accent); margin-bottom:6px;">THE CORE DESIGN PRINCIPLE</div>
+        <p style="font-size:13px; color:var(--body); line-height:1.55;">Feedback is evidence, not noise. By surfacing it <b class="hl">inside the conversation it came from</b>, the analyst understands the failure in context — not in a detached report — and can act immediately.</p>
+      </div>
+    </div>
+  </div>
+  <div class="notes"><h4>SPEAKER NOTES</h4>The second and third flows collapsed into one screen: assess and act. The conversation detail modal shows the full thread — so the analyst reads the exact exchange that failed. The downvote appears right below the answer that triggered it, with the category the user chose and their written comment. Then "+ Add to coaching" is right there, attached to the specific answer. The insight: if you separate the failure from the action, the analyst has to hold context in their head. By surfacing feedback in-context and putting the fix action right there, you reduce cognitive load and remove the motivation to defer. This is the "no switching tools" promise from the brief, delivered.</div>
+</section>
+
+<!-- ════════════ NAV + NOTES + GRID ════════════ -->
+<div id="prev" class="navbtn">‹</div>
+<div id="next" class="navbtn">›</div>
+<div class="pagenum"></div>
+<div class="hint">← → slides · <b style="color:var(--accent)">N</b> notes · <b style="color:var(--accent)">O</b> overview</div>
+<div id="grid"></div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let i = 0;
+  const pagenum = document.querySelector('.pagenum');
+  const isMobile = () => window.matchMedia('(max-width:760px)').matches;
+
+  function show(n){
+    if(isMobile()) return;
+    i = Math.max(0, Math.min(slides.length-1, n));
+    slides.forEach((s,k)=> s.classList.toggle('active', k===i));
+    pagenum.textContent = (i+1)+' / '+slides.length;
+  }
+  function toggleNotes(){ document.querySelectorAll('.notes').forEach(el=>el.classList.toggle('show')); }
+
+  const grid = document.getElementById('grid');
+  function buildGrid(){
+    if(grid.childElementCount) return;
+    slides.forEach((s,k)=>{
+      const wrap = document.createElement('div'); wrap.className='wrap';
+      const clone = s.cloneNode(true); clone.classList.add('active');
+      clone.querySelectorAll('.notes').forEach(n=>n.remove());
+      wrap.appendChild(clone);
+      const lbl = document.createElement('div'); lbl.className='lbl';
+      const h = clone.querySelector('h1,h2'); lbl.textContent = (k+1)+'. '+(h?h.textContent.slice(0,46):'Slide');
+      wrap.appendChild(lbl);
+      wrap.onclick = ()=>{ document.body.classList.remove('overview'); show(k); };
+      grid.appendChild(wrap);
+    });
+  }
+  function toggleOverview(){ if(isMobile()) return; buildGrid(); document.body.classList.toggle('overview'); }
+
+  document.addEventListener('keydown', e=>{
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){ e.preventDefault(); show(i+1); }
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); show(i-1); }
+    else if(e.key.toLowerCase()==='n'){ toggleNotes(); }
+    else if(e.key.toLowerCase()==='o'||e.key.toLowerCase()==='g'){ toggleOverview(); }
+    else if(e.key==='Home'){ show(0); }
+    else if(e.key==='End'){ show(slides.length-1); }
+  });
+  document.getElementById('next').onclick = ()=> show(i+1);
+  document.getElementById('prev').onclick = ()=> show(i-1);
+
+  let tx=0;
+  document.addEventListener('touchstart', e=>{ tx=e.changedTouches[0].clientX; }, {passive:true});
+  document.addEventListener('touchend', e=>{
+    if(isMobile()) return;
+    const dx = e.changedTouches[0].clientX - tx;
+    if(Math.abs(dx)>60){ show(dx<0 ? i+1 : i-1); }
+  }, {passive:true});
+
+  if(!isMobile()) show(0);
+  window.addEventListener('resize', ()=>{
+    if(isMobile()){ slides.forEach(s=>s.classList.remove('active')); }
+    else { document.body.classList.remove('overview'); show(i); }
+  });
+</script>
+</body>
+</html>

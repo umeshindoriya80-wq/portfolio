@@ -1,0 +1,1911 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#09090b">
+<meta name="description" content="Monitoring Spotter — a case study on giving analysts one place to track, assess, and refine ThoughtSpot's AI analyst after launch.">
+<title>Monitoring Spotter — Umesh Indoriya</title>
+<script>document.documentElement.classList.add('js')</script>
+<link rel="stylesheet" href="../css/design.css">
+<!-- DEV: version switching + V2 timeline styles (paired with slide-controller.js) -->
+<style>
+  .version-off{display:none !important;}
+  /* Dock is at top — push hero content below it */
+  .cs-hero{padding-top:clamp(96px,11vh,136px);}
+  body{padding-bottom:0;}
+  .v2tl{position:relative;max-width:920px;margin:8px auto 0;}
+  .v2tl-row{display:grid;grid-template-columns:210px 1fr;gap:28px;padding-bottom:52px;position:relative;}
+  .v2tl-left{position:sticky;top:96px;align-self:start;display:flex;align-items:center;gap:14px;}
+  .v2tl-dot{width:36px;height:36px;border-radius:50%;background:var(--paper);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1;}
+  .v2tl-dot span{width:12px;height:12px;border-radius:50%;background:var(--faint);transition:background .25s;}
+  .v2tl-row.is-active .v2tl-dot span{background:var(--accent);}
+  .v2tl-title{font-size:18px;font-weight:800;letter-spacing:-.01em;color:var(--muted);transition:color .25s;}
+  .v2tl-row.is-active .v2tl-title{color:var(--ink);}
+  .v2tl-content p{font-size:13.5px;color:var(--body);line-height:1.65;margin:0 0 16px;}
+  .v2tl-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .v2tl-grid--one{grid-template-columns:1fr;}
+  .v2tl-grid img{width:100%;height:180px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#fff;box-shadow:0 1px 2px rgba(20,20,26,.05),0 14px 44px rgba(20,20,26,.07);}
+  .v2tl-grid--one img{height:auto;max-height:440px;object-fit:contain;padding:10px;}
+  .v2tl::before{content:'';position:absolute;left:17px;top:6px;bottom:40px;width:2px;background:var(--line);}
+  .v2tl-beam{position:absolute;left:17px;top:6px;width:2px;height:0;border-radius:2px;background:linear-gradient(to bottom,var(--accent),#8b7bf0);box-shadow:0 0 12px rgba(91,75,214,.35);}
+  @media(max-width:760px){
+    .v2tl-row{grid-template-columns:1fr;gap:10px;}
+    .v2tl-left{position:relative;top:0;margin-bottom:6px;}
+    .v2tl-content{padding-left:50px;}
+    .v2tl-grid img{height:140px;}
+  }
+
+  /* ── IA Annotated Screenshot ─────────────────────────────────── */
+  .ia-annotate{display:grid;grid-template-columns:300px 1fr;gap:48px;align-items:start;margin-top:40px;}
+  .ia-screen-wrap{position:relative;}
+  .ia-screen-crop{
+    width:280px;height:700px;
+    background-color:#1a1e2e;
+    background-image:url('../images/19-all-chats-nav.png');
+    background-size:1400px auto;background-position:0 0;background-repeat:no-repeat;
+    border-radius:10px;
+    box-shadow:0 2px 24px rgba(20,20,26,.14);
+    position:relative;
+  }
+  .ia-badge{
+    position:absolute;width:24px;height:24px;border-radius:50%;
+    background:#f59e0b;color:#fff;font-size:11px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 0 3px rgba(245,158,11,.28),0 2px 8px rgba(0,0,0,.28);
+    transform:translate(-50%,-50%);
+  }
+  .ia-screen-cap{font-size:11px;color:var(--muted);text-align:center;margin-top:10px;letter-spacing:.3px;}
+  .ia-legend{display:flex;flex-direction:column;gap:20px;padding-top:4px;}
+  .ia-leg-row{display:flex;gap:16px;align-items:start;}
+  .ia-leg-badge{width:28px;height:28px;border-radius:50%;background:#f59e0b;color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+  .ia-leg-body strong{font-size:15px;font-weight:800;color:var(--ink);display:block;margin-bottom:6px;}
+  .ia-leg-body p{font-size:14px;color:var(--body);line-height:1.55;margin:0;}
+  .ia-leg-note{background:var(--faint);border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:14px 16px;font-size:13px;color:var(--body);line-height:1.5;margin-top:4px;}
+  .ia-leg-note .tag{display:inline-block;margin-bottom:8px;}
+  @media(max-width:800px){.ia-annotate{grid-template-columns:1fr;}}
+
+  /* ── Journey timeline — consistent inner blocks (shared with v2tl) ── */
+  .v2tl-content .tl-chips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 0;}
+  .v2tl-content .tl-chip{font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:.08em;background:var(--paper);color:var(--muted);border:1px solid var(--line-2);border-radius:3px;padding:5px 12px;text-transform:uppercase;}
+  .v2tl-content .tl-arrow{align-self:center;color:var(--muted);font-size:13px;}
+  .v2tl-content .tl-callout{background:var(--paper);border:1px solid var(--line-2);border-left:2px solid var(--accent);border-radius:var(--radius);padding:16px 20px;margin-top:12px;}
+  .v2tl-content .tl-callout + .tl-callout{margin-top:10px;}
+  .v2tl-content .tl-clabel{font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:8px;}
+  .v2tl-content .tl-callout h4{font-family:var(--font-head);font-size:15px;font-weight:500;text-transform:uppercase;letter-spacing:.02em;margin:0 0 6px;color:var(--ink);}
+  .v2tl-content .tl-callout p{font-size:13px;color:var(--body);line-height:1.6;margin:0;}
+  .v2tl-content .tl-tree{font-family:var(--font-mono);font-size:12px;line-height:1.9;color:var(--body);background:var(--paper);border:1px solid var(--line-2);border-radius:var(--radius);padding:14px 18px;margin-top:12px;}
+  .v2tl-content .tl-steps{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .v2tl-content .tl-step{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--body);}
+  .v2tl-content .tl-step-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-family:var(--font-mono);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .v2tl-content .tl-scope-label{font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin:0 0 8px;}
+  .v2tl-content .tl-scope + .tl-scope{margin-top:16px;border-top:1px solid var(--line);padding-top:16px;}
+  .v2tl-grid{margin-top:28px;}
+
+  /* ── Torch / flashlight hero (white inverted spotlight) ─────────── */
+  .torch{position:relative;min-height:100vh;background:#050506;overflow:hidden;cursor:none;isolation:isolate;}
+  .torch *{cursor:none;}
+  /* the pure-white torch disc that follows the cursor */
+  .torch-spot{position:absolute;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(circle var(--torch-r,165px) at var(--mx,74%) var(--my,40%),
+      #ffffff 0%,#ffffff 98%,rgba(255,255,255,0) 99%);
+    transition:opacity .25s;}
+  .torch.is-out .torch-spot{opacity:0;}
+  /* scattered items — dark ink, masked so they only appear inside the white disc */
+  .torch-scatter{position:absolute;inset:0;z-index:2;pointer-events:none;
+    -webkit-mask:radial-gradient(circle var(--torch-r,165px) at var(--mx,74%) var(--my,40%),#000 0%,#000 97%,transparent 98%);
+            mask:radial-gradient(circle var(--torch-r,165px) at var(--mx,74%) var(--my,40%),#000 0%,#000 97%,transparent 98%);}
+  .torch.is-out .torch-scatter{opacity:0;}
+  .torch-item{position:absolute;transform:translate(-50%,-50%);text-align:center;font-weight:800;letter-spacing:-.01em;line-height:1.15;user-select:none;}
+  .torch-item--chip{background:#d6322b;color:#fff;border-radius:50%;width:118px;height:118px;display:flex;align-items:center;justify-content:center;font-size:14px;padding:10px;}
+  .torch-item--note{font-size:16px;font-weight:700;color:#14141a;max-width:240px;}
+  /* always-visible headline — blend-inverts over the white disc so it stays readable */
+  .torch-fixed{position:relative;z-index:3;pointer-events:none;max-width:1100px;margin:0 auto;
+    padding:clamp(120px,18vh,220px) clamp(24px,6vw,80px) 0;mix-blend-mode:difference;}
+  .torch-ey{font-size:11px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:#7a7975;margin:0 0 26px;}
+  .torch-h1{font-size:clamp(40px,6.4vw,94px);font-weight:800;letter-spacing:-.02em;line-height:.98;color:#fff;margin:0;text-transform:uppercase;}
+  .torch-sub{font-size:clamp(20px,3vw,34px);font-weight:400;color:#cfcecb;margin:18px 0 0;letter-spacing:-.01em;}
+  .torch-hint{position:absolute;left:50%;bottom:42px;transform:translateX(-50%);z-index:3;pointer-events:none;
+    font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#56554f;display:flex;align-items:center;gap:10px;}
+  .torch-hint .torch-dot{width:7px;height:7px;border-radius:50%;background:#d6322b;animation:torchPulse 1.8s ease-in-out infinite;}
+  @keyframes torchPulse{0%,100%{opacity:.3;}50%{opacity:1;}}
+  @media(max-width:760px){
+    .torch{min-height:auto;padding-bottom:60px;cursor:auto;}
+    .torch *{cursor:auto;}
+    .torch-spot,.torch-hint{display:none;}
+    .torch-fixed{mix-blend-mode:normal;}
+    .torch-scatter{position:relative;display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:30px 20px 0;
+      -webkit-mask:none;mask:none;}
+    .torch-item{position:static;transform:none;}
+    .torch-item--note{color:#c9c8c4;}
+  }
+
+  /* ════════════════════════════════════════════════════════════════
+     V2 DESIGN KIT — minimal, single-colour (red / white / black).
+     Scoped to [data-version="v2"] so V1 is untouched. Re-themes the
+     accent to red, flattens cards, and tightens section headers.
+     ════════════════════════════════════════════════════════════════ */
+  [data-version="v2"]{ --accent:#E0301E; --accent-2:#b31d10; --accent-soft:#fdecea; --accent-line:#f1c7c2; }
+  /* wide section headers — run across the space, never a tall narrow block */
+  [data-version="v2"] .s-head h2{ font-size:clamp(28px,3.4vw,44px); max-width:30ch; line-height:1.08; letter-spacing:-.02em; }
+  [data-version="v2"] .s-head__top .s-num{ color:var(--accent); }
+  /* flat minimal cards */
+  [data-version="v2"] .card{ background:#fff; border:1px solid var(--line); border-radius:8px; box-shadow:none; }
+  [data-version="v2"] .card-label{ color:var(--accent); }
+
+  /* ── R2 hierarchy components (used inside V2 slides) ── */
+  /* before → after evolution band (the primary focal block) */
+  .r2-evolve{display:grid;grid-template-columns:1fr 56px 1.2fr;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;margin-top:4px;}
+  .r2-cell{padding:clamp(22px,2.8vw,34px);}
+  .r2-cell--from{background:#faf9f7;}
+  .r2-cell--to{background:#fff;box-shadow:inset 4px 0 0 #E0301E;}
+  .r2-arrow{display:flex;align-items:center;justify-content:center;background:#faf9f7;color:#E0301E;font-size:20px;border-left:1px solid var(--line);border-right:1px solid var(--line);}
+  .r2-elabel{display:block;font-size:11px;letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:14px;color:#9a9a93;}
+  .r2-cell--to .r2-elabel{color:#E0301E;}
+  .r2-cell p{margin:0;font-size:15px;line-height:1.55;color:var(--ink);}
+  .r2-cell--from p{color:#76756f;}
+  .r2-flow{font-weight:800 !important;font-size:clamp(18px,2.1vw,24px) !important;letter-spacing:-.01em;margin-top:12px !important;color:var(--ink) !important;}
+  /* secondary supporting row (de-emphasised, sits below the primary) */
+  .r2-sub{display:grid;grid-template-columns:1.55fr 1fr;gap:16px;margin-top:16px;}
+  .r2-sub .card{background:#faf9f7;}
+  .r2-sub .card-label{color:#9a9a93;}
+  /* header + visual paired across the width (kills dead space) */
+  .r2-split{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,4.5vw,64px);align-items:center;margin-bottom:clamp(30px,5vh,56px);}
+  .r2-lead .s-head__top{display:flex;align-items:baseline;gap:14px;margin-bottom:16px;}
+  .r2-lead h2{font-size:clamp(30px,3.6vw,48px);line-height:1.04;letter-spacing:-.02em;margin:0;max-width:none;font-weight:800;}
+  .r2-diagram{background:#fff;border:1px solid var(--line);border-radius:12px;padding:clamp(18px,2.4vw,28px);}
+  /* orientation (small/secondary) vs the gap (large/primary) */
+  .r2-context{display:grid;grid-template-columns:1fr 1.5fr;gap:16px;align-items:start;}
+  .r2-facts{display:grid;gap:16px;}
+  .card--mini{padding:18px 20px !important;background:#faf9f7;}
+  .card--mini .card-label{color:#9a9a93;}
+  .card--mini p{margin:0;font-size:14px;line-height:1.5;}
+  .r2-gap{border:1px solid var(--accent-line) !important;box-shadow:inset 4px 0 0 #E0301E;}
+  /* card-free key points — left stack vs the gap (no card chrome) */
+  .r2-keys{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,5vw,72px);margin:clamp(28px,4.5vh,48px) 0;align-items:start;}
+  .r2-keys__col{display:grid;gap:clamp(22px,3vh,34px);align-content:start;}
+  .r2-key{border-top:2px solid var(--ink);padding-top:14px;}
+  .r2-key--accent{border-top-color:#E0301E;}
+  .r2-key__label{display:block;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#9a9a93;margin-bottom:10px;}
+  .r2-key--accent .r2-key__label{color:#E0301E;}
+  .r2-keys p{margin:0;font-size:15px;line-height:1.6;color:var(--body);}
+  /* full-width supporting diagram (sits at the bottom of a slide) */
+  .r2-diagram-wide{margin-top:6px;}
+  .r2-diagram-wide svg{width:100%;max-width:740px;display:block;}
+  .r2-diagram-cap{font-size:13px;color:var(--muted);margin:14px 0 0;}
+  /* context slide — two-column table layout */
+  [data-version="v2"] .ctx-title{font-size:clamp(52px,7vw,100px);font-weight:500;letter-spacing:-.02em;line-height:1;margin:0 0 clamp(28px,4vh,52px);}
+  [data-version="v2"] .ctx-row{display:grid;grid-template-columns:220px 1fr;gap:clamp(24px,3vw,48px);padding:clamp(20px,3vh,32px) 0;border-top:1px solid var(--line);}
+  [data-version="v2"] .ctx-row:last-of-type{border-bottom:1px solid var(--line);}
+  [data-version="v2"] .ctx-row__label{font-family:var(--font-head);font-size:16px;font-weight:700;letter-spacing:-.01em;text-transform:uppercase;color:var(--muted);line-height:1.2;padding-top:2px;}
+  [data-version="v2"] .ctx-row__content{font-size:15px;line-height:1.65;color:var(--body);}
+  [data-version="v2"] .ctx-row__content p{margin:0;}
+  [data-version="v2"] .ctx-indent{margin-top:16px;padding:14px 18px;border-left:2px solid var(--accent);margin-left:0;}
+  [data-version="v2"] .ctx-indent__label{font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin:0 0 10px;display:block;}
+  [data-version="v2"] .ctx-row__content--with-img{display:flex;gap:clamp(20px,3vw,40px);align-items:center;}
+  [data-version="v2"] .ctx-gap-img{flex-shrink:0;width:clamp(240px,38%,380px);object-fit:contain;margin-left:clamp(16px,2vw,32px);}
+  @media(max-width:680px){[data-version="v2"] .ctx-row{grid-template-columns:1fr;gap:10px;} [data-version="v2"] .ctx-row__content--with-img{flex-direction:column;} [data-version="v2"] .ctx-gap-img{width:100%;}}
+  @media(max-width:860px){
+    .r2-split{grid-template-columns:1fr;gap:24px;}
+    .r2-context{grid-template-columns:1fr;}
+    .r2-keys{grid-template-columns:1fr;gap:28px;}
+  }
+
+  /* clean numbered list — no cards (process / steps) */
+  .r2-list{margin-top:8px;border-top:1px solid var(--line);}
+  .r2-list__row{display:grid;grid-template-columns:60px 1fr 1.3fr;gap:clamp(20px,4vw,56px);align-items:start;padding:clamp(22px,3vh,34px) 0;border-bottom:1px solid var(--line);}
+  .r2-list__num{font-size:15px;font-weight:700;color:#c2c1ba;font-variant-numeric:tabular-nums;}
+  .r2-list__title{font-size:clamp(17px,1.9vw,22px);font-weight:800;letter-spacing:-.015em;color:var(--ink);}
+  .r2-list__desc{font-size:14.5px;line-height:1.62;color:var(--body);margin:0;}
+  .r2-list__row--accent .r2-list__num{color:#E0301E;}
+  /* clean column key-points — no cards (rule on top, label, text) */
+  .r2-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(22px,3vw,44px);margin-top:8px;}
+  .r2-cols--2{grid-template-columns:1fr 1fr;}
+  .r2-cols__item{border-top:2px solid var(--ink);padding-top:16px;}
+  .r2-cols__item--accent{border-top-color:#E0301E;}
+  .r2-cols__label{display:block;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#9a9a93;margin-bottom:10px;}
+  .r2-cols__item--accent .r2-cols__label{color:#E0301E;}
+  .r2-cols p{margin:0;font-size:14px;line-height:1.6;color:var(--body);}
+  /* annotated screenshot split — numbered list (left) + screenshot (right) */
+  .r2-iasplit{display:grid;grid-template-columns:1fr 300px;gap:clamp(32px,5vw,72px);align-items:start;margin-top:4px;}
+  .r2-iasplit__media{display:flex;justify-content:flex-end;}
+  /* tight 2-column list variant: [num] [title over desc] */
+  .r2-list--tight .r2-list__row{grid-template-columns:52px 1fr;gap:18px;align-items:start;}
+  .r2-list--tight .r2-list__num{color:#E0301E;}
+  .r2-list--tight .r2-list__desc{margin-top:6px;}
+  /* V2 theme clean-ups: keep everything red / white / black */
+  [data-version="v2"] .ia-badge,[data-version="v2"] .ia-leg-badge{background:#E0301E;box-shadow:0 0 0 3px rgba(224,48,30,.22),0 2px 8px rgba(0,0,0,.28);}
+  [data-version="v2"] .ia-leg-note{border-left-color:#E0301E;}
+  [data-version="v2"] .tag-green{background:#fdecea;color:#b31d10;}
+  [data-version="v2"] ul.bullets.green li::before{background:#14141a;}
+
+  /* ── Torch panel (contained flashlight-in-the-dark block) ── */
+  .torch2{position:relative;height:clamp(360px,54vh,540px);background:#050506;border-radius:14px;overflow:hidden;cursor:none;margin-top:clamp(28px,4vh,44px);}
+  .torch2 *{cursor:none;}
+  .torch2-spot{position:absolute;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(circle var(--torch-r,150px) at var(--mx,50%) var(--my,50%),#fff 0%,#fff 98%,rgba(255,255,255,0) 99%);transition:opacity .25s;}
+  .torch2.is-out .torch2-spot{opacity:0;}
+  .torch2-scatter{position:absolute;inset:0;z-index:2;pointer-events:none;
+    -webkit-mask:radial-gradient(circle var(--torch-r,150px) at var(--mx,50%) var(--my,50%),#000 0%,#000 97%,transparent 98%);
+            mask:radial-gradient(circle var(--torch-r,150px) at var(--mx,50%) var(--my,50%),#000 0%,#000 97%,transparent 98%);}
+  .torch2.is-out .torch2-scatter{opacity:0;}
+  .torch2-item{position:absolute;transform:translate(-50%,-50%);text-align:center;font-weight:800;letter-spacing:-.01em;line-height:1.15;user-select:none;}
+  .torch2-item--chip{background:#d6322b;color:#fff;border-radius:50%;width:104px;height:104px;display:flex;align-items:center;justify-content:center;font-size:12.5px;padding:8px;}
+  .torch2-item--note{color:#14141a;font-size:15px;font-weight:700;max-width:220px;}
+  .torch2-label{position:absolute;left:22px;top:18px;z-index:3;pointer-events:none;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#fff;mix-blend-mode:difference;}
+  .torch2-hint{position:absolute;left:22px;bottom:18px;z-index:3;pointer-events:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#fff;mix-blend-mode:difference;display:flex;align-items:center;gap:9px;}
+  .torch2-hint .torch2-dot{width:7px;height:7px;border-radius:50%;background:#d6322b;animation:torchPulse 1.8s ease-in-out infinite;}
+  @media(max-width:760px){
+    .torch2{height:auto;cursor:auto;padding:28px 20px;}
+    .torch2 *{cursor:auto;}
+    .torch2-spot,.torch2-hint{display:none;}
+    .torch2-scatter{position:relative;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;-webkit-mask:none;mask:none;}
+    .torch2-item{position:static;transform:none;}
+    .torch2-item--note{color:#c9c8c4;}
+  }
+
+  @media(max-width:760px){
+    .r2-evolve{grid-template-columns:1fr;}
+    .r2-arrow{height:46px;border:none;border-top:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(90deg);}
+    .r2-sub{grid-template-columns:1fr;}
+    .r2-list__row{grid-template-columns:1fr;gap:6px;}
+    .r2-list--tight .r2-list__row{grid-template-columns:52px 1fr;}
+    .r2-cols,.r2-cols--2{grid-template-columns:1fr;}
+    .r2-iasplit{grid-template-columns:1fr;}
+    .r2-iasplit__media{justify-content:flex-start;}
+  }
+
+  /* ─── Solution stack (sticky headers, scrolling bodies) ─────────── */
+  :root{--sol-dock:80px;--sol-bar:96px;}
+  .sol-wrap{padding:0 !important;}
+  .sol-stack{position:relative;}
+  /* nested sections — each card wraps the next so its header stays stuck through all of it */
+  .sol-card{position:relative;}
+  /* only the BAR sticks; the body scrolls normally underneath it */
+  .sol-bar{
+    position:sticky;
+    top:var(--sol-dock);            /* overridden per-card by JS for accumulation */
+    z-index:5;                      /* always above the bodies scrolling behind it */
+    background:var(--bg);           /* opaque — hides content passing behind it */
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+  .sol-bar__in{
+    max-width:var(--max-w);margin:0 auto;
+    padding-left:var(--pad-x);padding-right:var(--pad-x);
+    padding-top:24px;padding-bottom:24px;
+    min-height:var(--sol-bar);box-sizing:border-box;
+    display:grid;grid-template-columns:64px 1fr 1.3fr;
+    gap:clamp(24px,4vw,56px);align-items:center;
+  }
+  /* lead bar sticks at the very top (top:0) and clears the floating dock with padding,
+     so its opaque bg covers all the way up — no gap for content to peek through */
+  .sol-card[data-sol="0"] > .sol-bar > .sol-bar__in{
+    padding-top:calc(var(--sol-dock) + 22px);
+  }
+  .sol-num{
+    font-family:var(--font-head);font-size:clamp(22px,2.8vw,40px);font-weight:500;
+    letter-spacing:-.01em;color:var(--faint);line-height:1;transition:color .25s;
+  }
+  .sol-card.is-active > .sol-bar .sol-num{color:var(--accent);}
+  .sol-title{
+    font-family:var(--font-head);font-size:clamp(22px,2.8vw,40px);
+    font-weight:600;text-transform:uppercase;letter-spacing:.02em;
+    color:var(--faint);margin:0;line-height:1.1;transition:color .25s;
+  }
+  .sol-card.is-active > .sol-bar .sol-title{color:var(--ink);}
+  .sol-desc{font-size:14px;line-height:1.65;color:var(--faint);margin:0;transition:color .25s;}
+  .sol-card.is-active > .sol-bar .sol-desc{color:var(--body);}
+  .sol-body{position:relative;z-index:1;background:var(--bg);}
+  .sol-body__in{
+    max-width:var(--max-w);margin:0 auto;
+    padding-left:var(--pad-x);padding-right:var(--pad-x);
+    padding-top:clamp(32px,5vh,64px);padding-bottom:clamp(56px,10vh,128px);
+  }
+  .sol-body .cs-img{background:transparent;border-color:transparent;}
+  .accent-labels .ctx-row__label{color:var(--ink);}
+  @media(max-width:760px){
+    :root{--sol-dock:68px;--sol-bar:72px;}
+    .sol-bar__in{grid-template-columns:40px 1fr;gap:16px;min-height:72px;padding-top:16px;padding-bottom:16px;}
+    .sol-desc{display:none;}
+    .sol-title{font-size:14px;}
+  }
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to content</a>
+
+<!-- ── Floating Dock Nav ── -->
+<nav class="fdock" id="fdock" aria-label="Main">
+  <a href="../index.html" class="fdock__item" aria-label="Home">
+    <span class="fdock__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1v-9.5z"/><path d="M9 21V13h6v8"/></svg></span>
+    <span class="fdock__name">Home</span>
+    <span class="fdock__label">Home</span>
+  </a>
+  <a href="../index.html#work" class="fdock__item" aria-label="Work">
+    <span class="fdock__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
+    <span class="fdock__name">Work</span>
+    <span class="fdock__label">Work</span>
+  </a>
+  <div class="fdock__sep" role="separator"></div>
+  <a href="../about.html" class="fdock__item" aria-label="About">
+    <span class="fdock__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"/></svg></span>
+    <span class="fdock__name">About</span>
+    <span class="fdock__label">About</span>
+  </a>
+  <a href="mailto:umesh.indoriya@thoughtspot.com" class="fdock__item" aria-label="Contact">
+    <span class="fdock__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></span>
+    <span class="fdock__name">Contact</span>
+    <span class="fdock__label">Contact</span>
+  </a>
+</nav>
+
+<main id="main">
+
+<!-- ───────── CANDIDATE · TORCH HERO (flashlight-in-the-dark intro) ───────── -->
+<header class="torch" id="torch-hero" data-slide-label="Candidate · Torch intro">
+  <div class="torch-scatter">
+    <div class="torch-item torch-item--chip" style="left:16%;top:30%;">FAILED ANSWER</div>
+    <div class="torch-item torch-item--chip" style="left:80%;top:24%;">BAD FEEDBACK</div>
+    <div class="torch-item torch-item--chip" style="left:64%;top:68%;">STALE METRIC</div>
+    <div class="torch-item torch-item--chip" style="left:30%;top:78%;">LOST CHAT</div>
+    <div class="torch-item torch-item--chip" style="left:88%;top:78%;">NO COACHING</div>
+    <div class="torch-item torch-item--note" style="left:22%;top:54%;">Which conversation went wrong?</div>
+    <div class="torch-item torch-item--note" style="left:78%;top:48%;">Where is the signal in the noise?</div>
+  </div>
+
+  <div class="torch-spot"></div>
+
+  <div class="torch-fixed">
+    <p class="torch-ey">ThoughtSpot · Monitoring Spotter</p>
+    <h1 class="torch-h1">Monitoring an AI<br>analyst meant<br>working in the dark.</h1>
+    <p class="torch-sub">Move your cursor to look around.</p>
+  </div>
+
+  <div class="torch-hint"><span class="torch-dot"></span>Move to reveal</div>
+</header>
+
+<!-- Torch hero interaction -->
+<script>
+(function(){
+  var hero=document.getElementById('torch-hero'); if(!hero) return;
+  var raf=null,px=0,py=0;
+  function apply(){ raf=null; hero.style.setProperty('--mx',px+'px'); hero.style.setProperty('--my',py+'px'); }
+  hero.addEventListener('mousemove',function(e){
+    var r=hero.getBoundingClientRect();
+    px=e.clientX-r.left; py=e.clientY-r.top;
+    if(!raf) raf=requestAnimationFrame(apply);
+  });
+  hero.addEventListener('mouseenter',function(){ hero.classList.remove('is-out'); });
+  hero.addEventListener('mouseleave',function(){ hero.classList.add('is-out'); });
+})();
+</script>
+
+<!-- ░░░░░░░░░░ CANDIDATE OPENING SLIDES — added for review, remove the ones not kept ░░░░░░░░░░ -->
+
+<!-- ───────── CANDIDATE · SLIDE 1 (alt hero) ───────── -->
+<section class="section section--alt">
+  <div class="wrap">
+    <p style="display:inline-block;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#fff;background:var(--amber);padding:4px 10px;border-radius:5px;margin:0 0 24px;">Candidate · Slide 1 — Hero</p>
+    <div class="cs-hero__label fade-up">
+      <span class="label">Case study</span>
+      <span class="cs-hero__rule"></span>
+      <span class="label" style="color:var(--muted);">ThoughtSpot · AI Analytics</span>
+    </div>
+    <h1 class="fade-up" style="margin:8px 0 0;">Designing monitoring for ThoughtSpot&rsquo;s AI Analyst</h1>
+    <p class="cs-hero-sub fade-up">Spotter helps business users answer questions in natural language. Analysts are responsible for its accuracy, but once Spotter is live they have little visibility into how it performs. I designed a monitoring experience that helps analysts identify important conversations, understand failures, and improve Spotter through coaching.</p>
+    <div class="cs-meta fade-up">
+      <div class="cs-meta-item"><p class="meta-label">Role</p><p class="meta-val">Lead Product Designer</p></div>
+      <div class="cs-meta-item"><p class="meta-label">Users</p><p class="meta-val">Analysts</p></div>
+      <div class="cs-meta-item"><p class="meta-label">Scope</p><p class="meta-val">UX Strategy · Information Architecture · Product Design</p></div>
+      <div class="cs-meta-item"><p class="meta-label">Timeline</p><p class="meta-val">8 Weeks</p></div>
+      <div class="cs-meta-item"><p class="meta-label">Team</p><p class="meta-val">PM · Engineering</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── CANDIDATE · SLIDE 2 (alt context) ───────── -->
+<section class="section">
+  <div class="wrap">
+    <p style="display:inline-block;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#fff;background:var(--amber);padding:4px 10px;border-radius:5px;margin:0 0 24px;">Candidate · Slide 2 — Context</p>
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">01</span><span class="label">Context</span></div>
+      <h2>Analysts own Spotter, but can&rsquo;t see how it&rsquo;s performing.</h2>
+    </div>
+
+    <div class="figure fade-up" style="max-width:520px;margin:0 0 28px;">
+      <svg viewBox="0 0 440 230" style="width:100%;" role="img" aria-label="Analyst enables Spotter for business users">
+        <defs><marker id="arc2" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#8b8b94"/></marker></defs>
+        <rect x="8" y="86" width="120" height="58" rx="11" fill="#fff" stroke="#14141a" stroke-width="1.3"/>
+        <text x="68" y="111" text-anchor="middle" fill="#14141a" font-family="system-ui" font-size="13" font-weight="700">Analyst</text>
+        <text x="68" y="129" text-anchor="middle" fill="#8b8b94" font-family="system-ui" font-size="10.5">enables Spotter</text>
+        <rect x="176" y="52" width="46" height="20" rx="10" fill="#e7f4ee" stroke="#2f9e6f"/>
+        <circle cx="212" cy="62" r="6.5" fill="#2f9e6f"/>
+        <rect x="160" y="84" width="100" height="62" rx="12" fill="#efedfb" stroke="#5b4bd6" stroke-width="1.4"/>
+        <text x="210" y="120" text-anchor="middle" fill="#4334b8" font-family="system-ui" font-size="14" font-weight="700">Spotter</text>
+        <rect x="300" y="86" width="132" height="58" rx="11" fill="#fff" stroke="#14141a" stroke-width="1.3"/>
+        <text x="366" y="111" text-anchor="middle" fill="#14141a" font-family="system-ui" font-size="12.5" font-weight="700">Business users</text>
+        <text x="366" y="129" text-anchor="middle" fill="#8b8b94" font-family="system-ui" font-size="10.5">ask questions</text>
+        <line x1="130" y1="115" x2="157" y2="115" stroke="#8b8b94" stroke-width="1.6" marker-end="url(#arc2)"/>
+        <line x1="262" y1="115" x2="297" y2="115" stroke="#8b8b94" stroke-width="1.6" marker-end="url(#arc2)"/>
+        <path d="M68 144 L68 196 L366 196 L366 146" fill="none" stroke="#5b4bd6" stroke-width="1.3" stroke-dasharray="5 5" marker-end="url(#arc2)" opacity=".75"/>
+        <text x="217" y="190" text-anchor="middle" fill="#5b4bd6" font-family="system-ui" font-size="10.5" font-weight="600">accountable for accuracy</text>
+      </svg>
+    </div>
+
+    <div class="grid-3 fade-up">
+      <div class="card">
+        <span class="card-label">What is Spotter?</span>
+        <p>AI analyst that answers business questions in natural language.</p>
+      </div>
+      <div class="card">
+        <span class="card-label">Who owns it?</span>
+        <p>Analysts enable Spotter, configure it, and are accountable for answer quality.</p>
+      </div>
+      <div class="card">
+        <span class="card-label" style="color:var(--red);">The gap</span>
+        <p>Once Spotter is live, analysts lose visibility into:</p>
+        <ul class="bullets" style="margin-top:8px;">
+          <li>What users are asking</li>
+          <li>Which conversations fail</li>
+          <li>Whether users are satisfied</li>
+          <li>Whether coaching is improving performance</li>
+        </ul>
+      </div>
+    </div>
+    <p class="cs-body fade-up" style="margin-top:20px;">The only available workflow was a flat list of conversations that analysts had to manually investigate one by one.</p>
+  </div>
+</section>
+
+<!-- ───────── CANDIDATE · SLIDE 3 (reframing the challenge) ───────── -->
+<section class="section section--alt">
+  <div class="wrap">
+    <p style="display:inline-block;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#fff;background:var(--amber);padding:4px 10px;border-radius:5px;margin:0 0 24px;">Candidate · Slide 3 — Reframing the challenge</p>
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">02</span><span class="label">Reframing the challenge</span></div>
+      <h2>The brief evolved.</h2>
+    </div>
+    <div class="grid-2 fade-up">
+      <div class="card">
+        <span class="card-label">Initial request</span>
+        <p>Create a surface where analysts can view Spotter conversations.</p>
+      </div>
+      <div class="card">
+        <span class="card-label">Research insight</span>
+        <p>Viewing conversations was necessary, but not sufficient. Analysts needed to:</p>
+        <ul class="bullets" style="margin-top:8px;">
+          <li>Find conversations that required attention</li>
+          <li>Understand what went wrong</li>
+          <li>Decide what action to take</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card card--l-accent fade-up" style="margin-top:16px;">
+      <span class="card-label">Reframed challenge</span>
+      <p>Design a workflow that helps analysts:</p>
+      <p style="font-weight:700;margin-top:8px;">Find / Observe &rarr; Review &rarr; Act</p>
+    </div>
+    <div class="card card--l-green fade-up" style="margin-top:16px;">
+      <span class="card-label" style="color:var(--green);">Outcome</span>
+      <p>The solution expanded from a conversation viewer to a monitoring workflow centered around conversation review.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ░░░░░░░░░░ END CANDIDATE SLIDES ░░░░░░░░░░ -->
+
+<!-- ══════════════════════════════════════════ HERO ══ -->
+<header class="cs-hero wrap">
+  <div class="cs-hero__label fade-up">
+    <span class="label">Case study</span>
+    <span class="cs-hero__rule"></span>
+    <span class="label" style="color:var(--muted);">ThoughtSpot · AI Analytics</span>
+  </div>
+  <h1 class="fade-up">A place for analysts to <em>monitor</em> the AI they ship.</h1>
+  <p class="cs-hero-sub fade-up">Spotter is ThoughtSpot&rsquo;s AI that answers business questions in plain language. An analyst sets it up for their team and is accountable for its accuracy &mdash; but once it&rsquo;s live, they can&rsquo;t see how it&rsquo;s performing: no read on adoption, no read on trust, no idea which answers are failing. I designed the one place to observe how Spotter performs, assess what&rsquo;s working, and act on what isn&rsquo;t.</p>
+  <div class="cs-meta fade-up">
+    <div class="cs-meta-item"><p class="meta-label">Role</p><p class="meta-val">Lead UX Designer</p></div>
+    <div class="cs-meta-item"><p class="meta-label">Scope</p><p class="meta-val">IA · Strategy · End-to-end UX</p></div>
+    <div class="cs-meta-item"><p class="meta-label">Timeline</p><p class="meta-val">May &ndash; Jul 2025 &middot; 8 weeks</p></div>
+    <div class="cs-meta-item"><p class="meta-label">Team</p><p class="meta-val">PM · Engineering · UX</p></div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════ STAT BAND ══ -->
+<section class="section" style="padding-top:clamp(40px,6vh,72px);">
+  <div class="wrap">
+    <div class="stat-band fade-up">
+      <div class="stat"><p class="stat-num tabular">500</p><p class="stat-sub">conversations an analyst can review in a single view</p></div>
+      <div class="stat"><p class="stat-num tabular">4</p><p class="stat-sub">disconnected places monitoring used to live</p></div>
+      <div class="stat"><p class="stat-num tabular">3</p><p class="stat-sub">core design decisions that shaped the product</p></div>
+      <div class="stat"><p class="stat-num tabular">2</p><p class="stat-sub">end-to-end flows shipped in the first release</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ CONTEXT (zig-zag) ══ -->
+<section class="section section--alt">
+  <div class="wrap">
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">01</span><span class="label">Context</span></div>
+      <h2>Who owns Spotter — and what they can't see.</h2>
+    </div>
+
+    <div class="zz">
+      <!-- Row 1 -->
+      <div class="zz-row fade-up">
+        <div class="zz-text">
+          <span class="zz-step">The setup</span>
+          <h2>One analyst is accountable for an AI everyone else uses.</h2>
+          <p>Business users ask questions in plain language and get charts and insights back. An <strong>analyst</strong> enables Spotter for their team — and is accountable for its accuracy. If Spotter gets it wrong, that's on them.</p>
+        </div>
+        <div class="zz-media">
+          <div class="figure">
+            <svg viewBox="0 0 440 230" style="width:100%;" role="img" aria-label="Analyst enables Spotter for business users">
+              <defs><marker id="ar" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#8b8b94"/></marker></defs>
+              <rect x="8" y="86" width="120" height="58" rx="11" fill="#fff" stroke="#14141a" stroke-width="1.3"/>
+              <text x="68" y="111" text-anchor="middle" fill="#14141a" font-family="system-ui" font-size="13" font-weight="700">Analyst</text>
+              <text x="68" y="129" text-anchor="middle" fill="#8b8b94" font-family="system-ui" font-size="10.5">enables Spotter</text>
+              <!-- toggle on -->
+              <rect x="176" y="52" width="46" height="20" rx="10" fill="#e7f4ee" stroke="#2f9e6f"/>
+              <circle cx="212" cy="62" r="6.5" fill="#2f9e6f"/>
+              <rect x="160" y="84" width="100" height="62" rx="12" fill="#efedfb" stroke="#5b4bd6" stroke-width="1.4"/>
+              <text x="210" y="120" text-anchor="middle" fill="#4334b8" font-family="system-ui" font-size="14" font-weight="700">Spotter</text>
+              <rect x="300" y="86" width="132" height="58" rx="11" fill="#fff" stroke="#14141a" stroke-width="1.3"/>
+              <text x="366" y="111" text-anchor="middle" fill="#14141a" font-family="system-ui" font-size="12.5" font-weight="700">Business users</text>
+              <text x="366" y="129" text-anchor="middle" fill="#8b8b94" font-family="system-ui" font-size="10.5">ask questions</text>
+              <line x1="130" y1="115" x2="157" y2="115" stroke="#8b8b94" stroke-width="1.6" marker-end="url(#ar)"/>
+              <line x1="262" y1="115" x2="297" y2="115" stroke="#8b8b94" stroke-width="1.6" marker-end="url(#ar)"/>
+              <!-- accountability arc -->
+              <path d="M68 144 L68 196 L366 196 L366 146" fill="none" stroke="#5b4bd6" stroke-width="1.3" stroke-dasharray="5 5" marker-end="url(#ar)" opacity=".75"/>
+              <text x="217" y="190" text-anchor="middle" fill="#5b4bd6" font-family="system-ui" font-size="10.5" font-weight="600">accountable for accuracy</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2 (flips) -->
+      <div class="zz-row fade-up">
+        <div class="zz-text">
+          <span class="zz-step" style="color:var(--red);">The blind spot</span>
+          <h2>Once it ships, the owner goes blind.</h2>
+          <p>The primary lever analysts have to improve Spotter is <strong>coaching</strong> — refining the questions it knows, fixing gaps in its knowledge. But coaching only works if you know what&rsquo;s failing. With no visibility into real conversations, analysts were guessing: which answers missed? Where were users dissatisfied? What coaching should be added? Without answers, the cycle stalled — quality stagnated and the analyst had no signal to act on.</p>
+          <p style="margin-top:14px;">This is how an AI feature quietly loses the trust it needs to get adopted: users stop asking, the analyst can&rsquo;t prove it&rsquo;s working, and the product loses its strongest case at renewal. Visibility wasn&rsquo;t a reporting nicety — it was the prerequisite for the product to improve at all.</p>
+        </div>
+        <div class="zz-media">
+          <div class="figure">
+            <svg viewBox="0 0 440 230" style="width:100%;" role="img" aria-label="The analyst cannot see how Spotter performs">
+              <rect x="40" y="34" width="360" height="120" rx="12" fill="#fff" stroke="#e7e6e1"/>
+              <!-- redacted metric bars -->
+              <g fill="#ecebe6">
+                <rect x="64" y="60" width="120" height="14" rx="4"/>
+                <rect x="64" y="86" width="170" height="14" rx="4"/>
+                <rect x="64" y="112" width="96" height="14" rx="4"/>
+              </g>
+              <rect x="270" y="58" width="106" height="78" rx="8" fill="#f6f5f1" stroke="#e7e6e1"/>
+              <g stroke="#d6d5cf" stroke-width="2"><line x1="284" y1="120" x2="284" y2="98"/><line x1="300" y1="120" x2="300" y2="86"/><line x1="316" y1="120" x2="316" y2="104"/><line x1="332" y1="120" x2="332" y2="78"/><line x1="348" y1="120" x2="348" y2="96"/><line x1="364" y1="120" x2="364" y2="88"/></g>
+              <!-- eye-off -->
+              <g transform="translate(220,176)" stroke="#d2483d" stroke-width="2.4" fill="none" stroke-linecap="round">
+                <path d="M-16 0 C-9 -10 9 -10 16 0 C9 10 -9 10 -16 0 Z"/>
+                <circle cx="0" cy="0" r="4"/>
+                <line x1="-19" y1="-15" x2="19" y2="15"/>
+              </g>
+              <text x="220" y="206" text-anchor="middle" fill="#d2483d" font-family="system-ui" font-size="11" font-weight="700" letter-spacing="1">NO SIGNAL REACHES THE ANALYST</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ DISCOVERY ══ -->
+<section class="section">
+  <div class="wrap">
+    <div class="s-head s-head--split fade-up">
+      <div>
+        <div class="s-head__top"><span class="s-num">02</span><span class="label">Discovery</span></div>
+        <h2>Analysts could see conversations existed &mdash; not which ones failed.</h2>
+      </div>
+      <p class="lead">Everyone agreed visibility was needed. The open question was what analysts would actually <em>do</em> once they could see conversations. Three research tracks answered it &mdash; and surfaced the specific failures the design had to solve.</p>
+    </div>
+
+    <div class="journey">
+      <div class="j-step j-step--accent fade-up">
+        <div class="j-rail"><div class="j-dot">1</div></div>
+        <div class="j-body">
+          <h3>Customer conversations</h3>
+          <p>Spoke with customers after they&rsquo;d enabled Spotter. The request came up repeatedly: <em>&ldquo;Give us visibility into how Spotter is being used and whether it&rsquo;s performing.&rdquo;</em> This wasn&rsquo;t a nice-to-have — it was blocking confidence in the product.</p>
+        </div>
+      </div>
+      <div class="j-step fade-up">
+        <div class="j-rail"><div class="j-dot">2</div></div>
+        <div class="j-body">
+          <h3>Analyst interviews</h3>
+          <p>Structured interviews with the people accountable for Spotter quality surfaced a consistent picture:</p>
+          <ul class="bullets" style="margin-top:12px;">
+            <li>Analysts felt <strong>blind</strong> to customer interactions after launch.</li>
+            <li>They could access a flat list of hundreds of conversations — but had no efficient way to identify which ones needed attention.</li>
+            <li>To investigate an issue they often had to scan the list manually, find a conversation, then <strong>recreate the user&rsquo;s question in Spotter</strong> to understand what went wrong.</li>
+            <li>They had no way to see feedback after Spotter was enabled.</li>
+            <li>They struggled to determine <strong>what coaching to add</strong> — or whether existing coaching was working.</li>
+            <li>They lacked confidence that coaching decisions were targeting the right problems.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="j-step fade-up">
+        <div class="j-rail"><div class="j-dot">3</div></div>
+        <div class="j-body">
+          <h3>Competitive research</h3>
+          <p>Studied how enterprise products approach monitoring. The strongest ones didn&rsquo;t just expose metrics — they helped users <strong>observe activity, assess its meaning, and take action.</strong> That three-part structure became the foundation of the monitoring framework.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ STRATEGY JOURNEY ══ -->
+<section class="section">
+  <div class="wrap">
+    <div class="s-head s-head--split fade-up">
+      <div>
+        <div class="s-head__top"><span class="s-num">03</span><span class="label">How we got here</span></div>
+        <h2>From a monitoring request to a focused V1 strategy.</h2>
+      </div>
+      <p class="lead">What started as a request for conversation monitoring evolved through research, exploration, and scope decisions. Each stage refined the problem &mdash; and determined what V1 should, and should not, solve.</p>
+    </div>
+
+    <div class="v2tl fade-up" id="v1-journey-timeline">
+      <div class="v2tl-beam"></div>
+
+      <!-- 01 The brief -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">The brief</h3></div>
+        <div class="v2tl-content">
+          <p>&ldquo;Customers want conversation monitoring.&rdquo; Initial assumption: build visibility into customer conversations.</p>
+        </div>
+      </div>
+
+      <!-- 02 Research -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">Research</h3></div>
+        <div class="v2tl-content">
+          <p>Customer calls &middot; Analyst interviews &middot; Customer feedback on Slack &middot; Workflow audit.</p>
+          <div class="tl-chips">
+            <span class="tl-chip">Lacked visibility</span>
+            <span class="tl-chip">No way to spot failures</span>
+            <span class="tl-chip">No coaching direction</span>
+            <span class="tl-chip">Quality stalled</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 03 Competition research -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">Competition research</h3></div>
+        <div class="v2tl-content">
+          <p>Monitoring is not just visibility &mdash; it&rsquo;s Observe, Assess, and Act. Used this framework to define what monitoring means for Spotter.</p>
+          <div class="tl-chips">
+            <span class="tl-chip">Observe</span>
+            <span class="tl-arrow">&#8594;</span>
+            <span class="tl-chip">Assess</span>
+            <span class="tl-arrow">&#8594;</span>
+            <span class="tl-chip">Act</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 04 Product audit → Additional problem -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">Product audit</h3></div>
+        <div class="v2tl-content">
+          <p>Current Spotter features were fragmented across surfaces &mdash; surfacing a second problem alongside the primary one of defining monitoring.</p>
+          <div class="tl-callout">
+            <span class="tl-clabel">Additional problem</span>
+            <h4>Reduce fragmentation.</h4>
+            <p>Create one home for all Spotter features &mdash; fix the IA.</p>
+          </div>
+          <div class="v2tl-grid">
+            <img loading="lazy" decoding="async" src="../images/08-full-product-flow.png" alt="Full product user flow mapping all monitoring touchpoints">
+            <img loading="lazy" decoding="async" src="../images/09-user-analyst-flow.png" alt="User to analyst signal flow">
+          </div>
+        </div>
+      </div>
+
+      <!-- 05 Ideation -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">Ideation</h3></div>
+        <div class="v2tl-content">
+          <p>Early vision + architecture explorations. Tried to map all Spotter activities under one structure. Explored central vs model-level architecture.</p>
+          <div class="tl-tree">Monitoring<br>&nbsp;&nbsp;&#9500; All Spotter conversations<br>&nbsp;&nbsp;&#9500; Coaching (reference questions, business terms)<br>&nbsp;&nbsp;&#9492; Usage metrics</div>
+          <div class="v2tl-grid">
+            <img loading="lazy" decoding="async" src="../images/10-feature-groupings.png" alt="Feature groupings into clusters">
+            <img loading="lazy" decoding="async" src="../images/11-ia-options-ab.png" alt="Two IA options A and B compared">
+          </div>
+        </div>
+      </div>
+
+      <!-- 06 Two scope decisions -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">Scope decisions</h3></div>
+        <div class="v2tl-content">
+          <div class="tl-callout">
+            <span class="tl-clabel">Decision 1 &middot; IA</span>
+            <h4>Monitoring at central level, not per data model.</h4>
+            <p>Centralising makes it easier to scale &mdash; one surface, all conversations, no duplication per model.</p>
+          </div>
+          <div class="tl-callout">
+            <span class="tl-clabel">Decision 2 &middot; Scope</span>
+            <h4>Coaching removed from V1.</h4>
+            <p>Coaching space was still evolving and confusing &mdash; could cause scalability issues. Focus only on monitoring conversations first.</p>
+          </div>
+          <div class="v2tl-grid v2tl-grid--one">
+            <img loading="lazy" decoding="async" src="../images/15-monitor-central-approach.png" alt="Chosen approach: one account-level monitor spanning every data model">
+          </div>
+        </div>
+      </div>
+
+      <!-- 07 V1 scope -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">V1 scope</h3></div>
+        <div class="v2tl-content">
+          <div class="tl-scope">
+            <span class="tl-scope-label">Scope 1 &middot; Conversation monitoring</span>
+            <div class="tl-steps">
+              <div class="tl-step"><span class="tl-step-num">1</span>Find the right conversation</div>
+              <div class="tl-step"><span class="tl-step-num">2</span>Assess the failure in context</div>
+              <div class="tl-step"><span class="tl-step-num">3</span>Add coaching inline &mdash; no context switch</div>
+            </div>
+          </div>
+          <div class="tl-scope">
+            <span class="tl-scope-label">Scope 2 &middot; Centralised IA</span>
+            <p>Bring all Spotter features &mdash; monitoring, coaching, usage &mdash; into one place in the main sidebar.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 08 Final design -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">Final design</h3></div>
+        <div class="v2tl-content">
+          <p>Several iterations later &mdash; the shipped design.</p>
+          <div class="tl-chips">
+            <span class="tl-chip">Conversation visibility</span>
+            <span class="tl-chip">Assessment workflow</span>
+            <span class="tl-chip">Centralised IA</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- V1 journey timeline scroll beam -->
+<script>
+(function(){
+  var tl=document.getElementById('v1-journey-timeline'); if(!tl) return;
+  var beam=tl.querySelector('.v2tl-beam');
+  var rows=tl.querySelectorAll('.v2tl-row');
+  function update(){
+    if(!tl.offsetParent) return;
+    var rect=tl.getBoundingClientRect();
+    var trigger=window.innerHeight*0.5;
+    var h=Math.max(0,Math.min(tl.offsetHeight, trigger-rect.top));
+    beam.style.height=h+'px';
+    for(var i=0;i<rows.length;i++){
+      var dot=rows[i].querySelector('.v2tl-dot').getBoundingClientRect();
+      rows[i].classList.toggle('is-active',(dot.top-rect.top)<=h+4);
+    }
+  }
+  window.addEventListener('scroll',update,{passive:true});
+  window.addEventListener('resize',update);
+  document.addEventListener('slidectl:versionchange',update);
+  update();
+})();
+</script>
+
+<!-- ══════════════════════════════════════════ WHAT MONITORING MEANS (journey) ══ -->
+<section class="section section--alt">
+  <div class="wrap">
+    <div class="s-head s-head--split fade-up">
+      <div>
+        <div class="s-head__top"><span class="s-num">04</span><span class="label">Framing the space</span></div>
+        <h2>I defined monitoring as a loop: Observe &rarr; Assess &rarr; Act.</h2>
+      </div>
+      <p class="lead">Competitive research gave me the frame: the strongest monitoring products help users observe activity, assess its meaning, and take action. I applied the same structure to the analyst&rsquo;s job — three moves that repeat, each one feeding the next.</p>
+    </div>
+
+    <div class="journey">
+      <div class="j-step j-step--accent fade-up">
+        <div class="j-rail"><div class="j-dot">1</div></div>
+        <div class="j-body">
+          <span style="color:var(--accent);"><svg class="j-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
+          <h3>Observe — track what's happening</h3>
+          <p>Surface how users actually interact with Spotter: questions asked, answers returned, follow-ups, thumbs up and down. Make the signal visible.</p>
+        </div>
+      </div>
+      <div class="j-step fade-up">
+        <div class="j-rail"><div class="j-dot">2</div></div>
+        <div class="j-body">
+          <span style="color:var(--accent);"><svg class="j-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <h3>Assess — judge what it means</h3>
+          <p>Read the signal for failures, gaps, and coaching needs. Separate a one-off miss from a pattern worth fixing.</p>
+        </div>
+      </div>
+      <div class="j-step fade-up">
+        <div class="j-rail"><div class="j-dot">3</div></div>
+        <div class="j-body">
+          <span style="color:var(--accent);"><svg class="j-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+          <h3>Act — refine, then watch again</h3>
+          <p>Update coaching to improve accuracy and adoption — and the loop restarts. Every action changes what the next observation shows.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ CURRENT STATE / FRAGMENTATION ══ -->
+<section class="section">
+  <div class="wrap">
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">05</span><span class="label">The audit</span></div>
+      <h2>Some visibility existed — scattered across four places.</h2>
+      <p class="lead">Mapping the current journeys surfaced the real problem. The pieces existed, but no one could see the whole picture from one place.</p>
+    </div>
+
+    <div class="figure fade-up" style="margin-bottom:28px;">
+      <svg viewBox="0 0 880 250" style="width:100%;" role="img" aria-label="Four scattered surfaces consolidating into one pane of glass">
+        <!-- left: scattered -->
+        <rect x="14" y="20" width="360" height="210" rx="14" fill="none" stroke="#e7e6e1" stroke-dasharray="6 6"/>
+        <text x="30" y="44" fill="#8b8b94" font-family="system-ui" font-size="11" font-weight="700" letter-spacing="2">BEFORE — FRAGMENTED</text>
+        <g font-family="system-ui">
+          <g><rect x="36" y="64" width="150" height="50" rx="9" fill="#fff" stroke="#d2483d" stroke-width="1.2"/><text x="111" y="86" text-anchor="middle" fill="#14141a" font-size="12" font-weight="650">Enable Spotter</text><text x="111" y="102" text-anchor="middle" fill="#8b8b94" font-size="10">in data model</text></g>
+          <g><rect x="206" y="78" width="150" height="50" rx="9" fill="#fff" stroke="#d2483d" stroke-width="1.2"/><text x="281" y="100" text-anchor="middle" fill="#14141a" font-size="12" font-weight="650">Adoption Liveboard</text><text x="281" y="116" text-anchor="middle" fill="#8b8b94" font-size="10">raw tabular data</text></g>
+          <g><rect x="36" y="140" width="150" height="50" rx="9" fill="#fff" stroke="#d2483d" stroke-width="1.2"/><text x="111" y="162" text-anchor="middle" fill="#14141a" font-size="12" font-weight="650">Coaching mgmt</text><text x="111" y="178" text-anchor="middle" fill="#8b8b94" font-size="10">low adoption</text></g>
+          <g><rect x="206" y="154" width="150" height="50" rx="9" fill="#fff" stroke="#d2483d" stroke-width="1.2"/><text x="281" y="176" text-anchor="middle" fill="#14141a" font-size="12" font-weight="650">Add coaching</text><text x="281" y="192" text-anchor="middle" fill="#8b8b94" font-size="10">inside chat</text></g>
+        </g>
+        <!-- arrow -->
+        <g stroke="#5b4bd6"><line x1="392" y1="125" x2="470" y2="125" stroke-width="1.6" marker-end="url(#ar2)"/></g>
+        <defs><marker id="ar2" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#5b4bd6"/></marker></defs>
+        <text x="431" y="116" text-anchor="middle" fill="#5b4bd6" font-family="system-ui" font-size="10" font-weight="700">UNIFY</text>
+        <!-- right: one pane -->
+        <rect x="494" y="20" width="372" height="210" rx="14" fill="#efedfb" stroke="#5b4bd6" stroke-width="1.4"/>
+        <text x="514" y="44" fill="#4334b8" font-family="system-ui" font-size="11" font-weight="700" letter-spacing="2">AFTER — ONE PANE OF GLASS</text>
+        <g fill="#fff" stroke="#c9c1ef">
+          <rect x="514" y="60" width="150" height="40" rx="8"/><rect x="676" y="60" width="170" height="40" rx="8"/>
+          <rect x="514" y="110" width="332" height="44" rx="8"/>
+          <rect x="514" y="164" width="160" height="48" rx="8"/><rect x="686" y="164" width="160" height="48" rx="8"/>
+        </g>
+        <g font-family="system-ui" fill="#4334b8" font-size="11" font-weight="650" text-anchor="middle">
+          <text x="589" y="84">Adoption</text><text x="761" y="84">Satisfaction</text>
+          <text x="680" y="137">All conversations</text>
+          <text x="594" y="192">Coaching</text><text x="766" y="192">Actions</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="grid-2 fade-up">
+      <div class="card card--l-accent">
+        <span class="card-label">Analyst Liveboard</span>
+        <p>Engagement and adoption metrics — but as raw tabular data. Read-only, no deep-dive, no action.</p>
+      </div>
+      <div class="card card--l-red">
+        <span class="card-label" style="color:var(--red);">Spotter coaching</span>
+        <p>Reference questions and business terms, added by analysts and suggested by users. Powerful, but <strong>low adoption</strong> and buried.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ DECISION 1 ══ -->
+<section class="section section--alt">
+  <div class="wrap">
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">Decision 01</span><span class="label">Defining scope</span></div>
+      <h2>V1 had to solve both the IA and the workflow &mdash; neither worked alone.</h2>
+      <p class="lead">I framed V1 around two problems that had to be solved together: the monitoring data was fragmented across surfaces, and there was no defined workflow for acting on it. Fix the structure alone and you get a tidy place where nothing happens; fix the workflow alone and you get a feature no one can find. V1 had to do both.</p>
+    </div>
+    <div class="grid-2 fade-up">
+      <div class="card card--accent">
+        <span class="tag tag-violet" style="margin-bottom:16px;">The structure</span>
+        <h3>Solve the IA — one pane of glass.</h3>
+        <ul class="bullets" style="margin-top:14px;">
+          <li>Bring every scattered surface into one place.</li>
+          <li>Directly answers the fragmentation problem.</li>
+        </ul>
+      </div>
+      <div class="card card--green">
+        <span class="tag tag-green" style="margin-bottom:16px;">The process</span>
+        <h3>Solve the monitoring workflow.</h3>
+        <ul class="bullets green" style="margin-top:14px;">
+          <li>Choose the right signals to monitor.</li>
+          <li>Help the analyst assess what they're seeing.</li>
+          <li>Help them take a meaningful action on it.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ IA EXPLORATION (staggered grid) ══ -->
+<section class="section">
+  <div class="wrap">
+    <div class="s-head s-head--split fade-up">
+      <div>
+        <div class="s-head__top"><span class="s-num">06</span><span class="label">IA exploration</span></div>
+        <h2>Mapping the space before committing.</h2>
+      </div>
+      <p class="lead">I worked the full surface before deciding where things lived — touchpoints, signal flows, feature clusters, then two competing structures. Early explorations treated coaching as a first-class area <em>inside</em> monitoring. The original structure was Observe &rarr; Assess &rarr; Coach, with coaching management living alongside the monitoring surface.</p>
+    </div>
+
+    <div class="ia-grid fade-up">
+      <figure class="ia-wide" style="margin:0;">
+        <img class="cs-img" loading="lazy" decoding="async" src="../images/08-full-product-flow.png" alt="Full product user flow mapping all monitoring touchpoints" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="ph-slot" style="display:none;"><div class="ph-ico">🗺</div><strong>Full product flow</strong>Save as <code>images/08-full-product-flow.png</code></div>
+        <figcaption>01 — Every monitoring touchpoint, mapped</figcaption>
+      </figure>
+      <figure style="margin:0;">
+        <img class="cs-img" loading="lazy" decoding="async" src="../images/09-user-analyst-flow.png" alt="User to analyst signal flow" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="ph-slot" style="display:none;"><div class="ph-ico">🔀</div><strong>User ↔ Analyst flow</strong>Save as <code>images/09-user-analyst-flow.png</code></div>
+        <figcaption>02 — Where user actions become analyst actions</figcaption>
+      </figure>
+      <figure style="margin:0;">
+        <img class="cs-img" loading="lazy" decoding="async" src="../images/10-feature-groupings.png" alt="Feature groupings into clusters" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="ph-slot" style="display:none;"><div class="ph-ico">🧩</div><strong>Feature groupings</strong>Save as <code>images/10-feature-groupings.png</code></div>
+        <figcaption>03 — Signals grouped into feature clusters</figcaption>
+      </figure>
+      <figure class="ia-wide" style="margin:0;">
+        <img class="cs-img" loading="lazy" decoding="async" src="../images/11-ia-options-ab.png" alt="Two IA options A and B compared" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="ph-slot" style="display:none;"><div class="ph-ico">⚖️</div><strong>IA options A vs B</strong>Save as <code>images/11-ia-options-ab.png</code></div>
+        <figcaption>04 — Two structures for the same feature set</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ DECISION 2 ══ -->
+<section class="section section--alt">
+  <div class="wrap">
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">Decision 02</span><span class="label">Limiting V1 scope</span></div>
+      <h2>I scoped coaching out of V1 to ship visibility first.</h2>
+      <p class="lead">This was the single largest scope decision, and it was mine to make. Coaching showed up in every early IA exploration, and there was pressure to ship it alongside monitoring. I argued to keep it out of V1 as a standalone workflow &mdash; and held that line.</p>
+    </div>
+    <div class="grid-2 fade-up">
+      <div class="card card--amber">
+        <span class="card-label" style="color:var(--amber);">Why I deferred coaching</span>
+        <ul class="bullets" style="margin-top:12px;">
+          <li>The coaching space was changing rapidly. Memory was beginning to reshape how coaching might work.</li>
+          <li>The long-term architecture was unclear &mdash; premature investment risked building the wrong system.</li>
+          <li>V1 needed to establish visibility first. Coaching decisions without data to ground them would be guesswork.</li>
+        </ul>
+      </div>
+      <div class="card card--green">
+        <span class="card-label" style="color:var(--green);">What I kept in V1</span>
+        <ul class="bullets green" style="margin-top:12px;">
+          <li>The full monitoring surface &mdash; observe and assess.</li>
+          <li>The ability to add coaching inline from a conversation &mdash; the minimal action, surfaced in context.</li>
+          <li>A real signal to return from: V1 would generate the feedback needed to shape coaching properly in the next phase.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ DECISION 3 (comparison) ══ -->
+<section class="section">
+  <div class="wrap">
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">Decision 03</span><span class="label">Where monitoring lives</span></div>
+      <h2>I chose one account-level monitor over per-model monitors.</h2>
+    </div>
+
+    <div class="figure fade-up" style="margin-bottom:32px;">
+      <svg viewBox="0 0 880 230" style="width:100%;" role="img" aria-label="Per-model monitors versus one central monitor across models">
+        <!-- A: per model -->
+        <text x="30" y="34" fill="#8b8b94" font-family="system-ui" font-size="11" font-weight="700" letter-spacing="2">OPTION A — MONITOR INSIDE EACH MODEL</text>
+        <g font-family="system-ui">
+          <g><rect x="30" y="52" width="118" height="72" rx="10" fill="#fff" stroke="#d2483d" stroke-width="1.2"/><text x="89" y="78" text-anchor="middle" fill="#14141a" font-size="11" font-weight="650">Data model A</text><rect x="44" y="90" width="90" height="22" rx="6" fill="#fbe9e7"/><text x="89" y="105" text-anchor="middle" fill="#d2483d" font-size="9.5">+ monitor</text></g>
+          <g><rect x="162" y="52" width="118" height="72" rx="10" fill="#fff" stroke="#d2483d" stroke-width="1.2"/><text x="221" y="78" text-anchor="middle" fill="#14141a" font-size="11" font-weight="650">Data model B</text><rect x="176" y="90" width="90" height="22" rx="6" fill="#fbe9e7"/><text x="221" y="105" text-anchor="middle" fill="#d2483d" font-size="9.5">+ monitor</text></g>
+          <g><rect x="294" y="52" width="118" height="72" rx="10" fill="#fff" stroke="#d2483d" stroke-width="1.2"/><text x="353" y="78" text-anchor="middle" fill="#14141a" font-size="11" font-weight="650">Data model C</text><rect x="308" y="90" width="90" height="22" rx="6" fill="#fbe9e7"/><text x="353" y="105" text-anchor="middle" fill="#d2483d" font-size="9.5">+ monitor</text></g>
+        </g>
+        <text x="30" y="158" fill="#d2483d" font-family="system-ui" font-size="11">Doesn't scale · clutters · no cross-model view</text>
+
+        <line x1="450" y1="40" x2="450" y2="190" stroke="#e7e6e1"/>
+
+        <!-- B: central -->
+        <text x="494" y="34" fill="#4334b8" font-family="system-ui" font-size="11" font-weight="700" letter-spacing="2">OPTION B — ONE CENTRAL MONITOR ✓</text>
+        <g fill="#fff" stroke="#c9c1ef" font-family="system-ui">
+          <rect x="494" y="120" width="100" height="48" rx="9"/><rect x="606" y="120" width="100" height="48" rx="9"/><rect x="718" y="120" width="100" height="48" rx="9"/>
+        </g>
+        <g font-family="system-ui" fill="#14141a" font-size="10.5" text-anchor="middle"><text x="544" y="148">Model A</text><text x="656" y="148">Model B</text><text x="768" y="148">Model C</text></g>
+        <rect x="556" y="52" width="200" height="44" rx="10" fill="#efedfb" stroke="#5b4bd6" stroke-width="1.4"/>
+        <text x="656" y="79" text-anchor="middle" fill="#4334b8" font-family="system-ui" font-size="12.5" font-weight="700">Central monitor</text>
+        <g stroke="#5b4bd6" stroke-width="1.3" opacity=".8"><line x1="544" y1="120" x2="620" y2="96"/><line x1="656" y1="120" x2="656" y2="96"/><line x1="768" y1="120" x2="692" y2="96"/></g>
+        <text x="656" y="190" text-anchor="middle" fill="#2f9e6f" font-family="system-ui" font-size="11" font-weight="650">Scales · maps signals across models · one home</text>
+      </svg>
+    </div>
+
+    <div class="compare fade-up">
+      <div class="card card--red">
+        <span class="tag tag-red" style="margin-bottom:12px;">Option A · per model</span>
+        <p style="color:var(--green); font-size:11px; font-weight:700; letter-spacing:1px; margin-bottom:6px;">PROS</p>
+        <ul class="bullets green"><li>Data and monitoring sit at the same level.</li><li>Security scoped to that model's admin.</li></ul>
+        <p style="color:var(--red); font-size:11px; font-weight:700; letter-spacing:1px; margin:12px 0 6px;">CONS</p>
+        <ul class="bullets red"><li>Breaks for anyone managing many models.</li><li>Page clutters as monitoring grows.</li></ul>
+      </div>
+      <div class="vs-divider">VS</div>
+      <div class="card card--green" style="position:relative;">
+        <span class="tag tag-green" style="position:absolute; top:18px; right:18px;">✓ Chosen</span>
+        <span class="tag tag-green" style="margin-bottom:12px;">Option B · central</span>
+        <p style="color:var(--green); font-size:11px; font-weight:700; letter-spacing:1px; margin-bottom:6px;">PROS</p>
+        <ul class="bullets green"><li>Scales as features grow.</li><li>Maps signals across models for richer insight.</li><li>One home for all Spotter activity.</li></ul>
+        <p style="color:var(--red); font-size:11px; font-weight:700; letter-spacing:1px; margin:12px 0 6px;">TRADE-OFF</p>
+        <ul class="bullets red"><li>Enabling Spotter stays in the model; the monitor lives separately.</li></ul>
+      </div>
+    </div>
+
+    <div class="fade-up" style="margin-top:32px;">
+      <img class="cs-img" loading="lazy" decoding="async" src="../images/15-monitor-central-approach.png" alt="Chosen approach: one account-level monitor spanning every data model"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="ph-slot" style="display:none;"><div class="ph-ico">🎯</div><strong>Chosen approach diagram</strong>Save as <code>images/15-monitor-central-approach.png</code></div>
+      <figcaption>An account-level monitor spanning every data model — not a separate monitor trapped inside each one.</figcaption>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════ V1 FLOWS (journey) ══ -->
+<section class="section section--alt">
+  <div class="wrap">
+    <div class="s-head s-head--split fade-up">
+      <div>
+        <div class="s-head__top"><span class="s-num">07</span><span class="label">V1 scope</span></div>
+        <h2>V1 shipped two flows: a metrics Liveboard and conversation monitoring.</h2>
+      </div>
+      <p class="lead">A metric Liveboard for data-level signals, and the one that carried the real design weight: monitoring every user conversation — broken into three jobs to solve.</p>
+    </div>
+
+    <div class="journey">
+      <div class="j-step fade-up">
+        <div class="j-rail"><div class="j-dot">1</div></div>
+        <div class="j-body">
+          <h3>Find the right conversation</h3>
+          <p>Out of hundreds, get the analyst to the one that needs attention — fast, without opening each one.</p>
+        </div>
+      </div>
+      <div class="j-step fade-up">
+        <div class="j-rail"><div class="j-dot">2</div></div>
+        <div class="j-body">
+          <h3>Assess the conversation</h3>
+          <p>Show the full thread, the answer Spotter gave, and the user's feedback — in context, so the failure is legible.</p>
+        </div>
+      </div>
+      <div class="j-step j-step--accent fade-up">
+        <div class="j-rail"><div class="j-dot">3</div></div>
+        <div class="j-body">
+          <h3>Take action</h3>
+          <p>Add coaching on the spot, on the failing answer, without switching tools or losing context.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ SHIPPED · IA FIX ══ -->
+<section class="section section--alt" data-version="v1">
+  <div class="wrap">
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">Solution 1</span><span class="label">All Spotter under one panel</span></div>
+      <h2>We moved Spotter into the main sidebar.</h2>
+      <p class="s-sub">Every Spotter feature — monitoring, coaching, usage — consolidated into a single sidebar panel. One place, zero hunting.</p>
+    </div>
+    <div class="ia-annotate fade-up">
+      <div class="ia-screen-wrap">
+        <div class="ia-screen-crop">
+          <div class="ia-badge" style="top:416px;left:218px">1</div>
+          <div class="ia-badge" style="top:545px;left:218px">2</div>
+        </div>
+        <p class="ia-screen-cap">ThoughtSpot sidebar &middot; Monitor Spotter shipped</p>
+      </div>
+      <div class="ia-legend">
+        <div class="ia-leg-row">
+          <div class="ia-leg-badge">1</div>
+          <div class="ia-leg-body">
+            <strong>Monitor Spotter — moved from Admin settings</strong>
+            <p>Usage metrics and liveboard data previously lived in Admin — a surface analysts rarely open. All chats is what we designed from scratch. Both now live here, inside the analyst workflow.</p>
+          </div>
+        </div>
+        <div class="ia-leg-row">
+          <div class="ia-leg-badge">2</div>
+          <div class="ia-leg-body">
+            <strong>Coach Spotter — already lived nearby</strong>
+            <p>Reference questions and Business terms were already close to this area. Grouping them under Coach Spotter made the separation explicit and the whole panel consistent.</p>
+          </div>
+        </div>
+        <div class="ia-leg-note">
+          <span class="tag tag-green">Scalable</span>
+          This structure handles future Spotter features too — any new capability has a clear home in the panel without disrupting the existing nav.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ SHIPPED · ALL CHATS ══ -->
+<section class="section">
+  <div class="wrap">
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">Shipped · 01</span><span class="label">Finding the conversation</span></div>
+      <h2>"All chats" — <span class="tabular">500</span> conversations, the right one in two clicks.</h2>
+    </div>
+
+    <div class="fade-up" style="margin-bottom:clamp(24px,3vh,40px);">
+      <img class="cs-img" loading="lazy" decoding="async" src="../images/17-all-chats.png" alt="All chats — the shipped conversation list screen"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="ph-slot" style="display:none;"><div class="ph-ico">📋</div><strong>All chats — shipped screen</strong>Save as <code>images/17-all-chats.png</code></div>
+    </div>
+
+    <div class="grid-3 fade-up">
+      <div class="card"><span class="card-label">Location</span><p>Lives under <strong>Monitor Spotter → All chats</strong> — the central surface from Decision 03.</p></div>
+      <div class="card"><span class="card-label">Table, not cards</span><p>Analysts scan 500 rows, filter and sort, and read quality signals at the list level — before opening anything.</p></div>
+      <div class="card"><span class="card-label">Columns earn their place</span><p>Follow-ups, thumbs, feedback category, model, author — each one a signal that decides <em>what to investigate next</em>.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ SHIPPED · CONVERSATION DETAIL (zig-zag) ══ -->
+<section class="section section--alt">
+  <div class="wrap">
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">Shipped · 02</span><span class="label">Assessing &amp; acting</span></div>
+      <h2>Conversation detail: assess the failure and coach without switching tools.</h2>
+    </div>
+
+    <div class="fade-up" style="margin-bottom:clamp(24px,3vh,40px);">
+      <img class="cs-img" loading="lazy" decoding="async" src="../images/18-conversation-detail.png" alt="Conversation detail — the shipped detail view"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="ph-slot" style="display:none;"><div class="ph-ico">💬</div><strong>Conversation detail — shipped</strong>Save as <code>images/18-conversation-detail.png</code></div>
+    </div>
+
+    <div class="grid-3 fade-up">
+      <div class="card">
+        <span class="card-label" style="color:var(--red);">What the analyst sees</span>
+        <ul class="bullets red" style="margin-top:8px;"><li>The full thread, including the chart Spotter generated.</li><li>The downvote surfaced <strong>in context</strong> under the failing answer, with category tags and the user's comment.</li></ul>
+      </div>
+      <div class="card">
+        <span class="card-label" style="color:var(--green);">What they can do</span>
+        <ul class="bullets green" style="margin-top:8px;"><li><strong>+ Add to coaching</strong> — inline on the failing answer, no context switch.</li><li>Read the exact comment before deciding what to add.</li></ul>
+      </div>
+      <div class="card">
+        <span class="card-label">The principle</span>
+        <p>Feedback is evidence, not noise. Surfaced inside the conversation it came from, the analyst understands the failure in context and acts immediately. No tab-switching. No deferred action.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ OUTCOMES ══ -->
+<section class="section">
+  <div class="wrap">
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">08</span><span class="label">Before &amp; after</span></div>
+      <h2>What the design changes for the analyst.</h2>
+      <p class="lead">The clearest read on the design is the workflow it replaces. Here is what investigating a single failing answer took before &mdash; and what it takes now.</p>
+    </div>
+
+    <div class="grid-2 fade-up" style="margin-bottom:20px;">
+      <div class="card card--l-red">
+        <span class="card-label" style="color:var(--red);">Before &mdash; reconstructing the failure</span>
+        <ul class="bullets red" style="margin-top:12px;">
+          <li>Open the adoption Liveboard and scan a flat log of questions and answers for a thumbs-down.</li>
+          <li>Copy the question, paste it into Spotter, and check whether the answer comes back wrong.</li>
+          <li>But your run doesn&rsquo;t carry the user&rsquo;s chat context &mdash; so it might look fine, or fail for a different reason.</li>
+          <li><strong>Tedious, and still no certainty about why it failed for the user.</strong></li>
+        </ul>
+      </div>
+      <div class="card card--l-green">
+        <span class="card-label" style="color:var(--green);">After &mdash; see it, correct it, coach it</span>
+        <ul class="bullets green" style="margin-top:12px;">
+          <li>Open the Spotter monitoring page; filter by the signal you need, or search for it.</li>
+          <li>Open the conversation as a full mirror &mdash; the user&rsquo;s real context, with their feedback highlighted on the failing answer.</li>
+          <li>Correct that answer in place if it&rsquo;s wrong, and save the fix as coaching.</li>
+          <li><strong>One question&ndash;answer mapping, corrected at the source &mdash; and applied for every user.</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card card--l-accent fade-up">
+      <span class="card-label">Why it works</span>
+      <p>The mirror reproduces the user&rsquo;s actual conversation, not an approximation. The analyst finally sees <em>why</em> the answer failed for that specific person &mdash; and fixes the root cause in one place, saving a corrected question&ndash;answer pair as coaching everyone benefits from. The single tedious loop that produced no certainty becomes one confident action.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ REFLECTION ══ -->
+<section class="section section--alt">
+  <div class="wrap wrap--narrow">
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">09</span><span class="label">Reflection</span></div>
+      <h2>Visibility was the foundation. Coaching was the next frontier.</h2>
+    </div>
+    <p class="cs-body fade-up">V1 gave analysts something they&rsquo;d never had: a real signal. They could see which conversations failed, where users pushed back, and what the feedback said. That was the prerequisite — you can&rsquo;t improve what you can&rsquo;t see.</p>
+    <p class="cs-body fade-up" style="margin-top:16px;">But visibility alone wasn&rsquo;t enough. Analysts could identify individual failures. The harder questions remained: <em>How do you recognize a pattern across hundreds of failures? How do you know which coaching would move the needle? How do you reduce the manual effort of improving Spotter week over week?</em></p>
+    <p class="cs-body fade-up" style="margin-top:16px;">Those questions pointed directly at <strong>Memory</strong> — a new layer that would let Spotter build and update its own knowledge over time, moving coaching from a manual analyst task to an intelligent, compounding system. Monitoring built the case for it. Memory became the next bet.</p>
+    <p class="cs-body fade-up" style="margin-top:16px;"><strong>What I&rsquo;d do differently:</strong> I&rsquo;d have instrumented success metrics into V1 from day one — adoption of the monitor, time-to-find a failing conversation, coaching actions taken. The visibility I built for analysts is exactly the visibility I should have built for the team measuring whether the feature worked.</p>
+  </div>
+</section>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  V2 MONITORING  —  alternate version (data-version="v2").       ║
+     ║  Hidden by default via .version-off; shown when the controller   ║
+     ║  switches to V2. Independent copies — editing V2 ≠ touching V1.   ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+
+<!-- ───────── V2 · SLIDE 1 (hero) ───────── -->
+<section class="section section--alt version-off" data-version="v2">
+  <div class="wrap">    <div class="cs-hero__label fade-up">
+      <span class="label">Case study</span>
+      <span class="cs-hero__rule"></span>
+      <span class="label" style="color:var(--muted);">ThoughtSpot · AI Analytics</span>
+    </div>
+    <h1 class="fade-up" style="margin:8px 0 0;">Designing Monitoring for Spotter, ThoughtSpot&rsquo;s Conversational AI</h1>
+    <p class="cs-hero-sub fade-up">Analysts are responsible for Spotter&rsquo;s accuracy, but once it is deployed they have limited visibility into how it performs. I designed a monitoring experience that helps them find important conversations, understand failures, and improve Spotter through coaching.</p>
+    <div class="cs-meta fade-up" style="display:grid;grid-template-columns:repeat(3,auto);row-gap:clamp(20px,3vh,32px);column-gap:clamp(32px,5vw,72px);justify-content:start;">
+      <div class="cs-meta-item"><p class="meta-label">Role</p><p class="meta-val">Product Designer</p></div>
+      <div class="cs-meta-item"><p class="meta-label">Scope</p><p class="meta-val">UX Strategy &middot; IA &middot; Product Design</p></div>
+      <div></div>
+      <div class="cs-meta-item"><p class="meta-label">Users</p><p class="meta-val">Analysts</p></div>
+      <div class="cs-meta-item"><p class="meta-label">Timeline</p><p class="meta-val">8 Weeks</p></div>
+      <div class="cs-meta-item"><p class="meta-label">Team</p><p class="meta-val">PM &middot; Engineering</p></div>
+    </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── V2 · SLIDE 2 (context) ───────── -->
+<section class="section version-off" data-version="v2">
+  <div class="wrap">
+
+    <h2 class="ctx-title fade-up">Context</h2>
+
+    <div class="ctx-row fade-up">
+      <span class="ctx-row__label">What is Spotter?</span>
+      <div class="ctx-row__content">
+        <p>Spotter is a conversational AI agent that answers business questions in natural language and delivers insights from your data.</p>
+      </div>
+    </div>
+
+    <div class="ctx-row fade-up">
+      <span class="ctx-row__label">Analyst responsibilities</span>
+      <div class="ctx-row__content">
+        <p>Analysts enable, configure and manage Spotter, ensuring it provides accurate, reliable answers to all enterprise business users.</p>
+      </div>
+    </div>
+
+    <div class="ctx-row fade-up">
+      <span class="ctx-row__label">The gap</span>
+      <div class="ctx-row__content ctx-row__content--with-img">
+        <div>
+          <p>Once Spotter is live, analysts lose visibility into:</p>
+          <ul class="bullets" style="margin-top:10px;">
+            <li>What users are asking</li>
+            <li>Which conversations fail</li>
+            <li>Whether users are satisfied</li>
+            <li>How effective current coaching is</li>
+            <li>What should be improved next</li>
+          </ul>
+        </div>
+        <img class="ctx-gap-img" src="../images/Analesy need 2 1.png" alt="Analyst enables AI Agent (Spotter) for Business Users — analyst has no visibility into what's happening"/>
+      </div>
+    </div>
+
+    <div class="ctx-row fade-up">
+      <span class="ctx-row__label">Initial brief</span>
+      <div class="ctx-row__content">
+        <p>Create a surface where analysts can view Spotter conversations.</p>
+        <div class="ctx-indent">
+          <p class="ctx-indent__label">With research, we noticed analysts also needed to:</p>
+          <ul class="bullets" style="margin-top:8px;">
+            <li>Find conversations that required attention</li>
+            <li>Understand what went wrong</li>
+            <li>Decide what action to take</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="ctx-row fade-up">
+      <span class="ctx-row__label">Updated brief</span>
+      <div class="ctx-row__content">
+        <p>Design a workflow that helps analysts find, review, and improve Spotter conversations.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── V2 · SLIDE 3 (reframing the challenge) — merged into Slide 2, hidden ───────── -->
+<section class="section section--alt version-off" data-version="v2" style="display:none !important">
+  <div class="wrap">    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">02</span><span class="label">Reframing the challenge</span></div>
+      <h2>The brief evolved.</h2>
+    </div>
+
+    <!-- PRIMARY: the brief evolution (initial → reframed) -->
+    <div class="r2-evolve fade-up">
+      <div class="r2-cell r2-cell--from">
+        <span class="r2-elabel">Initial request</span>
+        <p>Create a surface where analysts can view Spotter conversations.</p>
+      </div>
+      <div class="r2-arrow">&rarr;</div>
+      <div class="r2-cell r2-cell--to">
+        <span class="r2-elabel">Reframed challenge</span>
+        <p>Design a workflow that helps analysts:</p>
+        <p class="r2-flow">Find / Observe &rarr; Review &rarr; Act</p>
+      </div>
+    </div>
+
+    <!-- SECONDARY: the why (research) and the result (outcome) -->
+    <div class="r2-sub fade-up">
+      <div class="card">
+        <span class="card-label">Research insight</span>
+        <p>Viewing conversations was necessary, but not sufficient. Analysts needed to:</p>
+        <ul class="bullets" style="margin-top:8px;">
+          <li>Find conversations that required attention</li>
+          <li>Understand what went wrong</li>
+          <li>Decide what action to take</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="card-label">Outcome</span>
+        <p>The solution expanded from a conversation viewer to a monitoring workflow centered around conversation review.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── V2 · SLIDE 4 (journey — vertical timeline) ───────── -->
+<section class="section version-off" data-version="v2">
+  <div class="wrap">    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">03</span><span class="label">How we got here</span></div>
+      <h2>Design Journey</h2>
+      <p class="lead">What began as a request to view conversations evolved through research, exploration, and product tradeoffs. Each stage helped define what analysts needed, what monitoring should support, and what was intentionally left out of V1.</p>
+    </div>
+
+    <div class="v2tl fade-up" id="v2-timeline">
+      <div class="v2tl-beam"></div>
+
+      <!-- 01 The brief -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">The brief</h3></div>
+        <div class="v2tl-content">
+          <p>Customers wanted conversation monitoring. Our initial assumption was that visibility alone would solve the problem.</p>
+        </div>
+      </div>
+
+      <!-- 02 Research -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">Research</h3></div>
+        <div class="v2tl-content">
+          <p>Customer calls &middot; Analyst interviews &middot; Customer feedback on Slack &middot; Workflow audit.</p>
+          <div class="tl-chips">
+            <span class="tl-chip">Lacked visibility</span>
+            <span class="tl-chip">No way to spot failures</span>
+            <span class="tl-chip">No coaching direction</span>
+            <span class="tl-chip">Quality stalled</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 03 Competition research -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">Competition research</h3></div>
+        <div class="v2tl-content">
+          <p>Across the multiple enterprise products we reviewed, monitoring followed a similar structure: surface relevant signals, help users understand them, and enable action. This became the framework for defining Spotter&rsquo;s monitoring experience.</p>
+          <div class="tl-chips">
+            <span class="tl-chip">Observe</span>
+            <span class="tl-arrow">&#8594;</span>
+            <span class="tl-chip">Assess</span>
+            <span class="tl-arrow">&#8594;</span>
+            <span class="tl-chip">Act</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 04 Product audit → Additional problem -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">Product audit</h3></div>
+        <div class="v2tl-content">
+          <p>Current Spotter features were fragmented across surfaces &mdash; surfacing a second problem alongside the primary one of defining monitoring.</p>
+          <div class="tl-callout">
+            <span class="tl-clabel">Additional problem</span>
+            <h4>Reduce fragmentation.</h4>
+            <p>Create one home for all Spotter features &mdash; fix the IA.</p>
+          </div>
+          <div class="v2tl-grid">
+            <img loading="lazy" decoding="async" src="../images/08-full-product-flow.png" alt="Full product user flow mapping all monitoring touchpoints">
+            <img loading="lazy" decoding="async" src="../images/09-user-analyst-flow.png" alt="User to analyst signal flow">
+          </div>
+        </div>
+      </div>
+
+      <!-- 05 Ideation -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">Ideation</h3></div>
+        <div class="v2tl-content">
+          <p>Early vision + architecture explorations. Tried to map all Spotter activities under one structure. Explored central vs model-level architecture.</p>
+          <div class="tl-tree">Monitoring<br>&nbsp;&nbsp;&#9500; All Spotter conversations<br>&nbsp;&nbsp;&#9500; Coaching (reference questions, business terms)<br>&nbsp;&nbsp;&#9492; Usage metrics</div>
+          <div class="v2tl-grid">
+            <img loading="lazy" decoding="async" src="../images/10-feature-groupings.png" alt="Feature groupings into clusters">
+            <img loading="lazy" decoding="async" src="../images/11-ia-options-ab.png" alt="Two IA options A and B compared">
+          </div>
+        </div>
+      </div>
+
+      <!-- 06 Two scope decisions -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">Scope decisions</h3></div>
+        <div class="v2tl-content">
+          <div class="tl-callout">
+            <span class="tl-clabel">Decision 1 &middot; IA</span>
+            <h4>Monitoring at central level, not per data model.</h4>
+            <p>Centralising makes it easier to scale &mdash; one surface, all conversations, no duplication per model.</p>
+          </div>
+          <div class="tl-callout">
+            <span class="tl-clabel">Decision 2 &middot; Scope</span>
+            <h4>Coaching removed from V1.</h4>
+            <p>Coaching space was still evolving and confusing &mdash; could cause scalability issues. Focus only on monitoring conversations first.</p>
+          </div>
+          <div class="v2tl-grid v2tl-grid--one">
+            <img loading="lazy" decoding="async" src="../images/15-monitor-central-approach.png" alt="Chosen approach: one account-level monitor spanning every data model">
+          </div>
+        </div>
+      </div>
+
+      <!-- 07 V1 scope -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">V1 scope</h3></div>
+        <div class="v2tl-content">
+          <div class="tl-scope">
+            <span class="tl-scope-label">Scope 1 &middot; Conversation monitoring</span>
+            <div class="tl-steps">
+              <div class="tl-step"><span class="tl-step-num">1</span>Find the right conversation</div>
+              <div class="tl-step"><span class="tl-step-num">2</span>Assess the failure in context</div>
+              <div class="tl-step"><span class="tl-step-num">3</span>Add coaching inline &mdash; no context switch</div>
+            </div>
+          </div>
+          <div class="tl-scope">
+            <span class="tl-scope-label">Scope 2 &middot; Centralised IA</span>
+            <p>Bring all Spotter features &mdash; monitoring, coaching, usage &mdash; into one place in the main sidebar.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 08 Final design -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">Final design</h3></div>
+        <div class="v2tl-content">
+          <p>Several iterations later &mdash; the shipped design.</p>
+          <div class="tl-chips">
+            <span class="tl-chip">Conversation visibility</span>
+            <span class="tl-chip">Assessment workflow</span>
+            <span class="tl-chip">Centralised IA</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- V2 timeline scroll beam (self-contained; no-op while V2 is hidden) -->
+<script>
+(function(){
+  var tl=document.getElementById('v2-timeline'); if(!tl) return;
+  var beam=tl.querySelector('.v2tl-beam');
+  var rows=tl.querySelectorAll('.v2tl-row');
+  function update(){
+    if(!tl.offsetParent) return; // hidden (version-off) → skip
+    var rect=tl.getBoundingClientRect();
+    var trigger=window.innerHeight*0.5;
+    var h=Math.max(0,Math.min(tl.offsetHeight, trigger-rect.top));
+    beam.style.height=h+'px';
+    for(var i=0;i<rows.length;i++){
+      var dot=rows[i].querySelector('.v2tl-dot').getBoundingClientRect();
+      rows[i].classList.toggle('is-active',(dot.top-rect.top)<=h+4);
+    }
+  }
+  window.addEventListener('scroll',update,{passive:true});
+  window.addEventListener('resize',update);
+  document.addEventListener('slidectl:versionchange',update);
+  update();
+})();
+</script>
+
+<!-- ══════════════════════════════════════════ SCOPE — WHAT WE DIDN'T BUILD ══ -->
+<section class="section version-off" data-version="v2">
+  <div class="wrap">
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">Scope</span><span class="label">What we didn&rsquo;t build</span></div>
+      <h2>Defining the boundaries of V1</h2>
+      <p class="lead">&ldquo;We explored several directions beyond conversation monitoring. While each addressed real user needs, they expanded the product beyond the core problem we were trying to solve.&rdquo;</p>
+    </div>
+
+    <!-- Exploration table -->
+    <div class="fade-up" style="margin-top:clamp(24px,3vh,40px);overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.6;">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:10px 16px 10px 0;border-bottom:2px solid currentColor;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;opacity:.6;width:18%;">Exploration</th>
+            <th style="text-align:left;padding:10px 16px;border-bottom:2px solid currentColor;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;opacity:.6;width:36%;">Why we explored it</th>
+            <th style="text-align:left;padding:10px 16px 10px 0;border-bottom:2px solid currentColor;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;opacity:.6;">Why it didn&rsquo;t make V1</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid rgba(0,0,0,.1);">
+            <td style="padding:16px 16px 16px 0;font-weight:700;vertical-align:top;">Benchmarking</td>
+            <td style="padding:16px;vertical-align:top;">Measure whether coaching improves Spotter over time.</td>
+            <td style="padding:16px 0;vertical-align:top;">Required scoring systems, baselines, and long-term evaluation infrastructure.</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(0,0,0,.1);">
+            <td style="padding:16px 16px 16px 0;font-weight:700;vertical-align:top;">Collaboration</td>
+            <td style="padding:16px;vertical-align:top;">Route conversations to domain experts for review.</td>
+            <td style="padding:16px 0;vertical-align:top;">Introduced ownership, assignment, and workflow management complexity.</td>
+          </tr>
+          <tr>
+            <td style="padding:16px 16px 16px 0;font-weight:700;vertical-align:top;">Full auditing</td>
+            <td style="padding:16px;vertical-align:top;">Create a complete record of AI performance and investigation history.</td>
+            <td style="padding:16px 0;vertical-align:top;">Shifted the product toward governance and operations rather than monitoring.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="fade-up" style="margin-top:24px;background:var(--paper);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:24px 28px;">
+      <h3 style="margin:0 0 12px;font-size:clamp(18px,2vw,24px);font-weight:700;letter-spacing:-.01em;color:var(--ink);font-family:var(--font-head);text-transform:uppercase;">The decision</h3>
+      <p style="color:var(--body);font-size:15px;line-height:1.65;margin:0;">These explorations helped us distinguish between valuable opportunities and the core problem that needed solving. Rather than building a governance, benchmarking, or workflow management platform, we focused V1 on a simpler objective: help analysts find important conversations, understand what happened, and take action through coaching.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ───────── V2 · FINAL SOLUTIONS banner ───────── -->
+<section class="version-off" data-version="v2" style="padding:clamp(20px,3vh,36px) 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
+  <div class="wrap fade-up">
+    <h2 style="font-family:var(--font-head);font-size:clamp(22px,2.8vw,40px);font-weight:500;text-transform:uppercase;letter-spacing:-.01em;line-height:1;margin:0;color:var(--muted);">Final Solutions</h2>
+  </div>
+</section>
+
+<!-- ───────── V2 · SLIDE 5b (shipped · IA fix) ───────── -->
+<section class="section section--alt version-off" data-version="v2">
+  <div class="wrap">
+    <div class="r2-iasplit fade-up">
+      <div class="r2-iasplit__text">
+        <div class="s-head">
+          <div class="s-head__top"><span class="s-num">Solution 1</span></div>
+          <h2>Fixing the IA.</h2>
+        </div>
+        <div class="r2-list r2-list--tight">
+          <div class="r2-list__row">
+            <span class="r2-list__num">01</span>
+            <div>
+              <h3 class="r2-list__title">Centralised IA</h3>
+              <p class="r2-list__desc">A single panel for all Spotter activities — scalable as we now look at Spotter across Data Models, rather than within individual Data Models.</p>
+            </div>
+          </div>
+          <div class="r2-list__row">
+            <span class="r2-list__num">02</span>
+            <div>
+              <h3 class="r2-list__title">Monitor Spotter</h3>
+              <p class="r2-list__desc">Usage metrics is the Liveboard itself. All Chats is what we designed from scratch. Both now live here, inside the analyst workflow.</p>
+            </div>
+          </div>
+          <div class="r2-list__row">
+            <span class="r2-list__num">03</span>
+            <div>
+              <h3 class="r2-list__title">Coach Spotter</h3>
+              <p class="r2-list__desc">Reference questions and Business terms were already in this panel, grouped together. Surfacing them under Coach Spotter made the consolidation intentional — analysts now access all things Spotter from one place, even across separate jobs.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="r2-iasplit__media">
+        <div class="ia-screen-wrap" style="position:relative;display:inline-block;width:100%;">
+          <img src="../images/19-all-chats-nav.png" alt="ThoughtSpot sidebar — Monitor Spotter shipped"
+               style="width:100%;display:block;border-radius:10px;box-shadow:0 2px 24px rgba(20,20,26,.14);"
+               onerror="this.style.opacity='.3'">
+          <div class="ia-badge" style="top:10%;left:50%">1</div>
+          <div class="ia-badge" style="top:42%;left:82%">2</div>
+          <div class="ia-badge" style="top:68%;left:82%">3</div>
+          <p class="ia-screen-cap">Data workspace &mdash; side panel</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── V2 · SHIPPED ACCORDION (slides 6–7 merged, sticky-scroll nested) ───────── -->
+<!-- ───────── V2 · SHIPPED CARD STACK ───────── -->
+<section class="sol-wrap version-off" data-version="v2">
+
+  <!-- Section intro -->
+  <div class="wrap fade-up" style="padding-top:clamp(48px,8vh,96px);padding-bottom:clamp(40px,6vh,72px);border-bottom:1px solid var(--line);">
+    <div class="s-head__top" style="margin-bottom:clamp(12px,1.5vh,20px);"><span class="s-num">Solution 2</span></div>
+    <h2 style="font-family:var(--font-head);font-size:clamp(36px,5vw,72px);font-weight:500;text-transform:uppercase;letter-spacing:-.02em;line-height:1;margin:0;color:var(--ink);">Monitoring conversation</h2>
+  </div>
+
+  <div class="sol-stack">
+
+    <!-- ── Card 1: Find ── (wraps 2 & 3 so its header stays stuck through both) -->
+    <div class="sol-card" data-sol="0">
+      <div class="sol-bar">
+        <div class="sol-bar__in">
+          <span class="sol-num">01</span>
+          <h2 class="sol-title">Find the right conversation</h2>
+          <p class="sol-desc">Out of hundreds, get the analyst to the one that needs attention — fast, without opening each one.</p>
+        </div>
+      </div>
+      <div class="sol-body">
+        <div class="sol-body__in">
+          <div class="fade-up" style="margin-bottom:clamp(20px,3vh,32px);">
+            <img class="cs-img sol-img" decoding="async" src="../images/17-all-chats.png" alt="All chats — the shipped conversation list screen"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="ph-slot" style="display:none;"><div class="ph-ico">📋</div><strong>All chats — shipped screen</strong>Save as <code>images/17-all-chats.png</code></div>
+          </div>
+          <div class="fade-up" style="padding-top:clamp(16px,2.5vh,24px);">
+            <span class="eyebrow" style="flex-shrink:0;white-space:nowrap;">Columns earn their place</span>
+          </div>
+          <div class="fade-up" style="display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-top:clamp(24px,3vh,40px);">
+            <div style="background:var(--bg);padding:20px 18px;"><span style="font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:0;color:#fff;background:var(--accent);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;flex-shrink:0;">1</span><h4 style="font-family:var(--font-head);font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--ink);margin:0 0 10px;">Conversation</h4><ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;"><li style="font-size:13px;color:var(--body);line-height:1.55;">Understand user intent.</li><li style="font-size:13px;color:var(--body);line-height:1.55;">Search for relevant conversations.</li></ul></div>
+            <div style="background:var(--bg);padding:20px 18px;"><span style="font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:0;color:#fff;background:var(--accent);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;flex-shrink:0;">2</span><h4 style="font-family:var(--font-head);font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--ink);margin:0 0 10px;">Follow-ups</h4><ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;"><li style="font-size:13px;color:var(--body);line-height:1.55;">Signal uncertainty or unresolved answers.</li><li style="font-size:13px;color:var(--body);line-height:1.55;">Highlight conversations worth reviewing.</li></ul></div>
+            <div style="background:var(--bg);padding:20px 18px;"><span style="font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:0;color:#fff;background:var(--accent);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;flex-shrink:0;">3</span><h4 style="font-family:var(--font-head);font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--ink);margin:0 0 10px;">Feedback</h4><ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;"><li style="font-size:13px;color:var(--body);line-height:1.55;">Direct indicator of user satisfaction.</li><li style="font-size:13px;color:var(--body);line-height:1.55;">Prioritize conversations needing attention.</li></ul></div>
+            <div style="background:var(--bg);padding:20px 18px;"><span style="font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:0;color:#fff;background:var(--accent);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;flex-shrink:0;">4</span><h4 style="font-family:var(--font-head);font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--ink);margin:0 0 10px;">Data model</h4><ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;"><li style="font-size:13px;color:var(--body);line-height:1.55;">Focus on owned areas.</li><li style="font-size:13px;color:var(--body);line-height:1.55;">Reduce investigation noise.</li></ul></div>
+            <div style="background:var(--bg);padding:20px 18px;"><span style="font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:0;color:#fff;background:var(--accent);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;flex-shrink:0;">5</span><h4 style="font-family:var(--font-head);font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--ink);margin:0 0 10px;">User &amp; recency</h4><ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;"><li style="font-size:13px;color:var(--body);line-height:1.55;">Narrow investigations by user or timeframe.</li><li style="font-size:13px;color:var(--body);line-height:1.55;">Validate outcomes after coaching updates.</li></ul></div>
+          </div>
+          <div class="accent-labels fade-up" style="margin-top:clamp(40px,6vh,72px);">
+            <span class="eyebrow" style="margin-bottom:20px;">Solved use cases</span>
+            <div class="ctx-row"><span class="ctx-row__label">Exploratory</span><div class="ctx-row__content"><p>Analyst arrives without a lead. Signal-rich columns — feedback type, category, conversation length, thumbs — surface what deserves attention before opening a single chat.</p></div></div>
+            <div class="ctx-row" style="border-bottom:1px solid var(--line);"><span class="ctx-row__label">Targeted</span><div class="ctx-row__content"><p>Analyst has a topic or chat reference in mind. Search works inside conversations, not just titles — so a specific question surfaces even if it never made it into the chat name.</p></div></div>
+          </div>
+        </div><!-- /Find body__in -->
+
+        <!-- ── Card 2: Assess ── (nested; wraps 3) -->
+        <div class="sol-card" data-sol="1">
+          <div class="sol-bar">
+            <div class="sol-bar__in">
+              <span class="sol-num">02</span>
+              <h2 class="sol-title">Assess the conversation</h2>
+              <p class="sol-desc">Show the full thread, the answer Spotter gave, and the user's feedback — in context, so the failure is legible.</p>
+            </div>
+          </div>
+          <div class="sol-body">
+            <div class="sol-body__in">
+              <div class="fade-up" style="margin-bottom:clamp(24px,3vh,40px);">
+                <img class="cs-img sol-img" decoding="async" src="../images/18-conversation-detail.png" alt="Conversation detail — the shipped detail view"
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                <div class="ph-slot" style="display:none;"><div class="ph-ico">💬</div><strong>Conversation detail — shipped</strong>Save as <code>images/18-conversation-detail.png</code></div>
+              </div>
+              <div class="fade-up" style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:0;">
+                <div style="background:var(--bg);padding:20px 18px;"><span style="font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:0;color:#fff;background:var(--accent);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;flex-shrink:0;">1</span><h4 style="font-family:var(--font-head);font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--ink);margin:0 0 8px;">Complete conversation context</h4><p style="font-size:13px;color:var(--body);line-height:1.6;margin:0;">Analysts can review the same conversation the business user experienced, including Spotter's responses, follow-up questions, and generated charts.</p></div>
+                <div style="background:var(--bg);padding:20px 18px;"><span style="font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:0;color:#fff;background:var(--accent);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;flex-shrink:0;">2</span><h4 style="font-family:var(--font-head);font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--ink);margin:0 0 8px;">Feedback surfaced in context</h4><p style="font-size:13px;color:var(--body);line-height:1.6;margin:0;">User feedback is highlighted directly beneath the answer it refers to, helping analysts quickly identify and assess failures.</p></div>
+              </div>
+              <div class="ctx-row fade-up" style="border-bottom:1px solid var(--line);"><span class="ctx-row__label">Why it matters</span><div class="ctx-row__content"><p>Conversation visibility was the primary request from analysts. Seeing the full interaction helps them understand how users ask questions and where Spotter breaks down.</p><p style="margin-top:10px;">Feedback acts as a shortcut to potential failures, helping analysts focus their investigation without reviewing every message in the thread.</p></div></div>
+            </div><!-- /Assess body__in -->
+
+            <!-- ── Card 3: Act ── (nested, innermost) -->
+            <div class="sol-card" data-sol="2">
+              <div class="sol-bar">
+                <div class="sol-bar__in">
+                  <span class="sol-num">03</span>
+                  <h2 class="sol-title">Take action</h2>
+                  <p class="sol-desc">Add coaching at the point of discovery, without switching tools or losing context.</p>
+                </div>
+              </div>
+              <div class="sol-body">
+                <div class="sol-body__in">
+                  <div class="fade-up" style="margin-bottom:clamp(24px,3vh,40px);">
+                    <img class="cs-img sol-img" decoding="async" src="../images/Take action.png" alt="Take action — add to coaching inline"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="ph-slot" style="display:none;"><div class="ph-ico">⚡</div><strong>Take action — shipped</strong>Save as <code>images/Take action.png</code></div>
+                  </div>
+                  <div class="ctx-row fade-up"><span class="ctx-row__label">What the analyst can do</span><div class="ctx-row__content"><ul class="bullets" style="margin:0;"><li>Save any question-answer mapping directly to coaching.</li><li>Correct an inaccurate response before saving it, turning a failure into a coaching opportunity.</li></ul></div></div>
+                  <div class="ctx-row fade-up" style="border-bottom:1px solid var(--line);"><span class="ctx-row__label">Why it works</span><div class="ctx-row__content"><ul class="bullets" style="margin:0;"><li>Monitoring and coaching become part of the same workflow.</li><li>Analysts can act on issues while the conversation, response, and feedback are still in context.</li><li>Reduces the manual effort of recreating problems and translating findings into coaching.</li></ul></div></div>
+                </div>
+              </div>
+            </div><!-- /Card 3 -->
+
+          </div>
+        </div><!-- /Card 2 -->
+
+      </div>
+    </div><!-- /Card 1 -->
+
+  </div><!-- /sol-stack -->
+
+</section>
+
+<!-- ───────── V2 · SLIDE 8 (expected impact) ───────── -->
+<section class="section version-off" data-version="v2">
+  <div class="wrap">
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">08</span><span class="label">Expected impact</span></div>
+      <h2>Expected impact</h2>
+    </div>
+
+    <div class="accent-labels">
+    <div class="ctx-row fade-up">
+      <span class="ctx-row__label">Faster investigation</span>
+      <div class="ctx-row__content">
+        <p>Analysts no longer need to manually sift through conversation logs or recreate failures in Spotter.</p>
+      </div>
+    </div>
+    <div class="ctx-row fade-up">
+      <span class="ctx-row__label">Better prioritization</span>
+      <div class="ctx-row__content">
+        <p>Multiple signals help surface conversations that deserve attention, reducing reliance on manual review.</p>
+      </div>
+    </div>
+    <div class="ctx-row fade-up" style="border-bottom:1px solid var(--line);">
+      <span class="ctx-row__label">Faster improvement loops</span>
+      <div class="ctx-row__content">
+        <p>Issues discovered during monitoring can be converted directly into coaching examples, reducing friction between investigation and action.</p>
+      </div>
+    </div>
+    </div><!-- /accent-labels -->
+  </div>
+</section>
+
+<!-- ───────── V2 · SLIDE 9 (experience & learnings) ───────── -->
+<section class="section version-off" data-version="v2">
+  <div class="wrap wrap--narrow">
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">09</span><span class="label">Experience &amp; learnings</span></div>
+      <h2>My experience &amp; learnings</h2>
+    </div>
+
+    <p class="cs-body fade-up">This was my first end-to-end strategic project, spanning product strategy, information architecture, and UX design. What began as a request for conversation visibility evolved into a broader challenge of defining what monitoring should mean for Spotter.</p>
+    <p class="cs-body fade-up" style="margin-top:16px;">As the project progressed, I explored several directions including auditing, benchmarking, and collaboration workflows. While each addressed legitimate user needs, they also expanded the scope beyond the core problem we were trying to solve.</p>
+    <p class="cs-body fade-up" style="margin-top:16px;">The most important lesson was realizing that deeper understanding often leads to simpler solutions. The final experience was significantly more focused than many of the concepts explored along the way, yet it better supported what analysts actually needed: finding issues, understanding them, and improving Spotter.</p>
+
+    <div class="accent-labels" style="margin-top:clamp(40px,6vh,72px);">
+      <div class="ctx-row fade-up">
+        <span class="ctx-row__label">Visibility is not the same as monitoring</span>
+        <div class="ctx-row__content">
+          <p>Exposing conversations was only the starting point. Effective monitoring required helping analysts identify issues, understand them, and take action.</p>
+        </div>
+      </div>
+      <div class="ctx-row fade-up">
+        <span class="ctx-row__label">Exploration is valuable even when it doesn't ship</span>
+        <div class="ctx-row__content">
+          <p>Many of the strongest ideas explored during the project never became part of the final solution. Their value was in helping define the boundaries of the product and clarifying what belonged in V1.</p>
+        </div>
+      </div>
+      <div class="ctx-row fade-up" style="border-bottom:1px solid var(--line);">
+        <span class="ctx-row__label">The workflow mattered more than any individual screen</span>
+        <div class="ctx-row__content">
+          <p>The final solution succeeded because it connected discovery, investigation, and coaching into a single workflow. The value came from reducing friction between these steps, not from any individual feature.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── V2 · SLIDE 10 (what i'd do differently) ───────── -->
+<section class="section section--alt version-off" data-version="v2">
+  <div class="wrap wrap--narrow">
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">10</span><span class="label">What I'd do differently</span></div>
+      <h2>What I'd do differently</h2>
+    </div>
+    <p class="label fade-up" style="margin-bottom:clamp(16px,2.5vh,24px);">Exploration creates clarity, but it needs boundaries</p>
+    <p class="cs-body fade-up">Some of the most valuable insights came from ideas that never shipped. Exploring adjacent problems helped us understand the opportunity space and make more informed decisions. However, every new direction increased complexity, expanded scope, and demanded additional time for validation and design. The challenge was knowing when to continue exploring and when to commit to a focused approach.</p>
+  </div>
+</section>
+
+<!-- ── Prev / next ── -->
+<nav class="cs-pagenav" aria-label="Case study navigation">
+  <div class="wrap" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+    <a href="../index.html#work" class="cs-pagenav-link">← Back to work</a>
+    <a href="../work/memory-spotter.html" class="cs-pagenav-link">Next: Memory for Spotter →</a>
+  </div>
+</nav>
+
+</main>
+
+<!-- ── Footer ── -->
+<div class="footer-wrap">
+  <footer class="site-footer">
+    <span class="footer-logo">Umesh Indoriya</span>
+    <span class="footer-copy">©2025 — Lead UX Designer</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="mailto:umesh.indoriya@thoughtspot.com">Email</a>
+      <a href="#" target="_blank" rel="noopener">LinkedIn ↗</a>
+    </nav>
+  </footer>
+</div>
+
+<script src="../js/site.js"></script>
+<!-- DEV ONLY — slide controller (iteration tool). Remove this line + js/slide-controller.js to disable. -->
+<script src="../js/slide-controller.js"></script>
+<script>
+/* Solution stack — sticky section headers that accumulate at the top.
+   Only the bars stick; bodies scroll normally and hide behind the bars. */
+(function(){
+  var stack = document.querySelector('.sol-stack');
+  if(!stack) return;
+  var cards = Array.prototype.slice.call(stack.querySelectorAll('.sol-card'));
+  if(!cards.length) return;
+  // each card's OWN bar (direct child, not a nested card's bar)
+  var bars = cards.map(function(c){ return c.querySelector(':scope > .sol-bar'); });
+
+  function dockPx(){
+    var v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sol-dock'));
+    return isNaN(v) ? 80 : v;
+  }
+
+  var tops = [];
+  // Set each bar's sticky offset so they pile up. The lead bar sticks at 0 (its own
+  // height already includes the dock clearance), the rest stack below by bar height.
+  function layout(){
+    var acc = 0;
+    for(var i=0;i<bars.length;i++){
+      bars[i].style.top = acc + 'px';
+      tops[i] = acc;
+      acc += bars[i].offsetHeight;
+    }
+  }
+
+  var lastActive = -2;
+  // The active (currently-reading) card is the deepest whose bar is pinned at its slot.
+  function refreshActive(){
+    var active = -1;
+    for(var i=0;i<bars.length;i++){
+      var top = bars[i].getBoundingClientRect().top;
+      if(Math.abs(top - tops[i]) <= 2) active = i;   // pinned exactly at its slot
+    }
+    if(active !== lastActive){
+      for(var j=0;j<cards.length;j++) cards[j].classList.toggle('is-active', j === active);
+      lastActive = active;
+    }
+  }
+
+  function refresh(){ if(stack.offsetParent){ layout(); refreshActive(); } }
+
+  var ticking=false;
+  window.addEventListener('scroll', function(){
+    if(!ticking){ ticking=true; requestAnimationFrame(function(){ refreshActive(); ticking=false; }); }
+  }, {passive:true});
+  window.addEventListener('resize', refresh);
+  window.addEventListener('load', refresh);
+  document.addEventListener('slidectl:versionchange', function(){ setTimeout(refresh, 60); });
+  cards.forEach(function(c){ var im=c.querySelector('img'); if(im && !im.complete) im.addEventListener('load', refresh); });
+  refresh();
+})();
+
+/* Floating dock magnification */
+(function(){
+  var dock=document.getElementById('fdock'); if(!dock) return;
+  var items=Array.from(dock.querySelectorAll('.fdock__item'));
+  var BASE=48, MAX=76, RANGE=110;
+  dock.addEventListener('mousemove',function(e){
+    items.forEach(function(item){
+      var r=item.getBoundingClientRect();
+      var cx=r.left+r.width/2;
+      var dist=Math.abs(e.clientX-cx);
+      var ratio=Math.max(0,1-dist/RANGE);
+      var size=BASE+(MAX-BASE)*ratio;
+      item.style.setProperty('--dw',size+'px');
+    });
+  });
+  dock.addEventListener('mouseleave',function(){
+    items.forEach(function(item){ item.style.removeProperty('--dw'); });
+  });
+})();
+</script>
+</body>
+</html>
+
+
+

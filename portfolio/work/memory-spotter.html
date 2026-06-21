@@ -134,9 +134,10 @@
     text-transform: uppercase; color: var(--muted); margin-bottom: clamp(16px,2.5vh,28px);
   }
   .stage-label .stage-num {
-    background: var(--accent); color: var(--on-accent);
-    padding: 3px 9px; border-radius: 3px;
-    font-weight: 700; font-size: 10px; letter-spacing: 2px;
+    background: var(--accent-soft); color: var(--accent);
+    border: 1px solid var(--accent-line);
+    padding: 5px 14px; border-radius: 4px;
+    font-weight: 700; font-size: 13px; letter-spacing: .04em;
   }
 
   /* ── Pain table ── */
@@ -286,6 +287,33 @@
     .entry-grid { grid-template-columns:1fr 1fr; }
     .bridge { flex-direction:column; }
     .bridge-arrow { transform:rotate(90deg); padding:4px 0; }
+  }
+
+  /* Mobile: wrap workflow flex row */
+  @media(max-width:760px){
+    [style*="display:flex"][style*="align-items:flex-start"][style*="gap:0"] {
+      flex-wrap: wrap;
+    }
+    [style*="display:flex"][style*="align-items:flex-start"][style*="gap:0"] > [style*="flex:1"] {
+      flex: 1 1 140px;
+    }
+    [style*="display:flex"][style*="align-items:flex-start"][style*="gap:0"] > [style*="flex-shrink:0"] {
+      display: none;
+    }
+  }
+
+  /* Mobile: stack all inline two-column grids */
+  @media(max-width:760px){
+    [style*="grid-template-columns:1fr 1fr"],
+    [style*="grid-template-columns: 1fr 1fr"] {
+      grid-template-columns: 1fr !important;
+    }
+    [style*="grid-template-columns:repeat(2,1fr)"],
+    [style*="grid-template-columns: repeat(2, 1fr)"] {
+      grid-template-columns: 1fr !important;
+    }
+    /* Workflow steps wrap on mobile */
+    .workflow { grid-template-columns: 1fr 1fr !important; }
   }
 
   /* ── Compact slide type system ─────────────────────────────────────
@@ -478,7 +506,7 @@
     <!-- 3. Analyst pain points -->
     <div class="fade-up" style="padding:clamp(20px,3vh,32px) 0; border-bottom:1px solid var(--line);">
       <h2>Analyst pain points</h2>
-      <p class="lead" style="margin-top:12px; margin-bottom:clamp(14px,2vh,22px);">Why the current process fails.</p>
+      <p class="lead" style="margin-top:12px; margin-bottom:clamp(14px,2vh,22px);">Today, analysts spend time creating and maintaining business context across multiple surfaces. As knowledge changes, keeping that context accurate becomes increasingly difficult.</p>
       <table class="pain-table">
         <thead>
           <tr>
@@ -518,30 +546,35 @@
     </div>
 
     <!-- 4. Opportunity -->
-    <div class="fade-up" style="padding-top:clamp(20px,3vh,32px); display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,4vw,56px); align-items:start;">
-      <div>
-        <h2 style="font-size:clamp(18px,2.2vw,26px) !important; color:var(--accent); letter-spacing:.06em; text-transform:uppercase; font-weight:700; margin:0 0 14px;">Opportunity</h2>
-        <p style="font-size:13px; line-height:1.7; color:var(--muted); margin:0 0 10px;">Today, analysts spend time creating and maintaining business context across multiple surfaces. As knowledge changes, keeping that context accurate becomes increasingly difficult.</p>
-        <p style="font-size:13px; line-height:1.7; color:var(--muted); margin:0 0 10px;">Memory presents an opportunity to shift analysts away from maintaining instructions and toward <strong style="color:#fff;">teaching business knowledge.</strong></p>
-        <p style="font-size:13px; line-height:1.7; color:var(--muted); margin:0 0 16px;">Instead of manually updating rules and mappings, analysts can provide context directly, while AI organises, relates, updates, and maintains that knowledge over time.</p>
-        <p style="font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin:0 0 8px;">Potential benefits</p>
-        <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:5px;">
-          <li style="font-size:13px; color:var(--muted); padding-left:12px; border-left:2px solid var(--accent-line);">Less repetitive manual work</li>
-          <li style="font-size:13px; color:var(--muted); padding-left:12px; border-left:2px solid var(--accent-line);">Easier updates when business knowledge changes</li>
-          <li style="font-size:13px; color:var(--muted); padding-left:12px; border-left:2px solid var(--accent-line);">Reduced conflicts between old and new context</li>
-          <li style="font-size:13px; color:var(--muted); padding-left:12px; border-left:2px solid var(--accent-line);">A single knowledge layer instead of fragmented surfaces</li>
-          <li style="font-size:13px; color:var(--muted); padding-left:12px; border-left:2px solid var(--accent-line);">Faster Spotter setup and adoption</li>
-        </ul>
+    <div class="fade-up" style="padding-top:clamp(20px,3vh,32px);">
+      <h2 style="font-size:clamp(18px,2.2vw,26px) !important; color:var(--accent); letter-spacing:.06em; text-transform:uppercase; font-weight:700; margin:0 0 14px;">Opportunity</h2>
+
+      <!-- Left: paragraphs | Right: potential benefits -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,4vw,56px); align-items:start; margin-bottom:20px;">
+        <div>
+          <p style="font-size:13px; line-height:1.7; color:#fff; margin:0 0 8px;">&#8594; Memory presents an opportunity to shift analysts away from maintaining instructions and toward <strong>teaching business knowledge.</strong></p>
+          <p style="font-size:13px; line-height:1.7; color:#fff; margin:0;">&#8594; Instead of manually updating rules and mappings, analysts can provide context directly, while AI organises, relates, updates, and maintains that knowledge over time.</p>
+        </div>
+        <div>
+          <p style="font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin:0 0 8px;">Potential benefits</p>
+          <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:5px;">
+            <li style="font-size:13px; color:var(--muted); padding-left:12px; border-left:2px solid var(--accent-line);">Less repetitive manual work</li>
+            <li style="font-size:13px; color:var(--muted); padding-left:12px; border-left:2px solid var(--accent-line);">Easier updates when business knowledge changes</li>
+            <li style="font-size:13px; color:var(--muted); padding-left:12px; border-left:2px solid var(--accent-line);">Reduced conflicts between old and new context</li>
+            <li style="font-size:13px; color:var(--muted); padding-left:12px; border-left:2px solid var(--accent-line);">A single knowledge layer instead of fragmented surfaces</li>
+            <li style="font-size:13px; color:var(--muted); padding-left:12px; border-left:2px solid var(--accent-line);">Faster Spotter setup and adoption</li>
+          </ul>
+        </div>
       </div>
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        <!-- Static context -->
+
+      <!-- Example cards — stacked below -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
         <div style="border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; background:var(--paper);">
           <p style="font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:0 0 8px;">Static context &#8212; both facts coexist</p>
           <p style="font-size:13px; color:var(--body); margin:0 0 4px;">Fact A &#8212; &#8220;Lives in <strong style="color:var(--ink);">Delhi</strong>&#8221;</p>
           <p style="font-size:13px; color:var(--body); margin:0 0 8px;">Fact B &#8212; &#8220;Lives in <strong style="color:var(--ink);">Bangalore</strong>&#8221;</p>
           <p style="font-size:12px; color:var(--muted); margin:0;">&#9888; Which one is true? The system doesn&#8217;t know.</p>
         </div>
-        <!-- Memory -->
         <div style="border:1px solid var(--accent-line); border-radius:var(--radius); padding:14px 16px; background:var(--accent-soft);">
           <p style="font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin:0 0 8px;">Memory &#8212; knowledge evolves</p>
           <p style="font-size:13px; color:var(--body); margin:0 0 8px;">Resolved &#8212; &#8220;Previously lived in <strong style="color:var(--ink);">Delhi</strong>. Currently lives in <strong style="color:var(--ink);">Bangalore</strong>.&#8221;</p>
@@ -558,9 +591,9 @@
     <div class="s-head fade-up">
       <div class="s-head__top">
         <span class="s-num">The Journey</span>
-        <h2>The journey to ship Memory</h2>
+        <h2>Project Journey</h2>
       </div>
-      <p class="lead">The initial requirement was simple: &#8220;Memory improves Spotter responses.&#8221; What wasn&#8217;t defined was what Memory actually is, how it should be structured, where it should live, how analysts would create it, and how it would connect back to Spotter. This project became much larger than designing a feature &#8212; it required defining an entirely new capability within the ThoughtSpot ecosystem.</p>
+      <p class="lead">Memory began as a simple idea: improve Spotter&#8217;s responses. What followed was a series of fundamental questions around definition, ownership, architecture, and adoption. Each stage below represents a key decision that shaped Memory into a scalable product capability.</p>
     </div>
 
     <div class="r2-list r2-list--compact fade-up">
@@ -654,7 +687,7 @@
 
     <!-- 1. Title + subcopy -->
     <div class="fade-up">
-      <div class="stage-label"><span class="stage-num">01</span> Defining Memory</div>
+      <div class="stage-label"><span class="stage-num">Stage 1: Defining Memory</span></div>
       <div class="s-head">
         <div class="s-head__top">
           <h2>Before designing anything, we had to define what Memory is</h2>
@@ -711,7 +744,7 @@
 
     <!-- 1. Header + intro -->
     <div class="fade-up">
-      <div class="stage-label"><span class="stage-num">02</span> Memory Architecture</div>
+      <div class="stage-label"><span class="stage-num">Stage 2: Memory Architecture</span></div>
       <div class="s-head">
         <div class="s-head__top">
           <h2>We explored multiple IA models and intentionally chose the simplest one</h2>
@@ -821,7 +854,7 @@
     <!-- Header + Decision left/right -->
     <div class="fade-up" style="display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,4vw,56px); align-items:start;">
       <div>
-        <div class="stage-label"><span class="stage-num">03</span> Where Memory Lives</div>
+        <div class="stage-label"><span class="stage-num">Stage 3: Where Memory Lives</span></div>
         <div class="s-head">
           <div class="s-head__top">
             <h2>Where should Memory live?</h2>
@@ -874,7 +907,7 @@
 
     <!-- Header -->
     <div class="fade-up">
-      <div class="stage-label"><span class="stage-num">04</span> Defining project scope for V1</div>
+      <div class="stage-label"><span class="stage-num">Stage 4: Defining Project Scope for V1</span></div>
       <div class="s-head">
         <div class="s-head__top">
           <h2>Where should Memory come from first?</h2>
@@ -1019,8 +1052,8 @@
 
     <!-- Header -->
     <div class="s-head fade-up">
-      <div class="s-head__top">
-        <span class="s-num">Execution</span>
+      <div class="s-head__top" style="flex-direction:column; align-items:flex-start; gap:10px;">
+        <div class="stage-label"><span class="stage-num">Stage 5: Design for V1</span></div>
         <h2>Liveboard to Memory workflow</h2>
       </div>
       <p class="lead">After deciding to generate Memory from Liveboards, the challenge shifted to designing an end-to-end workflow that analysts could complete with confidence. The flow itself was straightforward. The complexity came from reducing friction and building trust at each step.</p>
@@ -1129,8 +1162,8 @@
 <section class="section section--alt">
   <div class="container">
     <div class="s-head fade-up">
-      <div class="s-head__top">
-        <span class="s-num">Ecosystem</span>
+      <div class="s-head__top" style="flex-direction:column; align-items:flex-start; gap:10px;">
+        <div class="stage-label"><span class="stage-num">Stage 6: Connecting to Ecosystem</span></div>
         <h2>Fitting Memory in the ThoughtSpot ecosystem</h2>
       </div>
       <p class="lead">A Memory Sources page hidden in Data Workspace is only half the answer. Analysts who work primarily in Liveboards or Spotter chat needed to encounter Memory without navigating to find it. We created entry points across the product ecosystem.</p>

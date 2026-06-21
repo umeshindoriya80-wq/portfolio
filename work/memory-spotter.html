@@ -225,6 +225,21 @@
   .dr-item { border-top: 1px solid var(--accent-line); padding-top: 14px; }
   .dr-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; display: block; }
   .dr-text { font-size: var(--text-sm); color: var(--body); line-height: 1.6; }
+  .compare-choice { position: relative; }
+  .compare-badge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: var(--accent);
+    color: var(--on-accent);
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+  }
 
   /* ── Workflow steps ── */
   .workflow { display: grid; grid-template-columns: repeat(6,1fr); gap: 0; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin-top: clamp(24px,3.5vh,40px); }
@@ -287,6 +302,8 @@
     .entry-grid { grid-template-columns:1fr 1fr; }
     .bridge { flex-direction:column; }
     .bridge-arrow { transform:rotate(90deg); padding:4px 0; }
+    .compare-choice { padding-top: 44px; }
+    .compare-badge { top: 12px; left: 12px; }
   }
 
   /* Mobile: wrap workflow flex row */
@@ -411,6 +428,11 @@
     </button>
   </div>
 </nav>
+
+<div class="nav-drawer" role="dialog" aria-label="Navigation">
+  <a href="../index.html#work">Work</a>
+  <a href="../index.html#contact">Contact</a>
+</div>
 
 <main id="main">
 
@@ -921,9 +943,9 @@
     <!-- Comparison: two options -->
     <div class="fade-up" style="margin-top:clamp(32px,5vh,56px); display:grid; grid-template-columns:1fr 1fr; border:2px solid var(--accent-line); border-radius:var(--radius); overflow:hidden;">
       <!-- A — chosen -->
-      <div style="position:relative; padding:clamp(20px,2.5vw,28px); border-right:2px solid var(--accent-line); background:rgba(52,211,153,.18);">
+      <div class="compare-choice" style="padding:clamp(20px,2.5vw,28px); border-right:2px solid var(--accent-line); background:rgba(52,211,153,.18);">
         <p style="font-size:13px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); margin:0 0 4px;">A — Learn from existing trusted knowledge</p>
-        <span style="position:absolute; top:0; left:0; background:var(--accent); color:var(--on-accent); width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;">&#10003;</span>
+        <span class="compare-badge">&#10003;</span>
         <ul style="list-style:none; padding:0; margin:8px 0 12px; display:flex; flex-direction:column; gap:6px;">
           <li style="font-size:13px; color:var(--body);">Liveboards</li>
           <li style="font-size:13px; color:var(--body);">Reference Questions</li>

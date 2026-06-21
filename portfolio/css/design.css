@@ -308,7 +308,7 @@ figcaption { margin-top:12px; font-size:var(--text-xs); color:var(--muted); lett
 /* ══════════════════════════════════════════════════════
    LANDING PAGE
    ══════════════════════════════════════════════════════ */
-.lp-hero { min-height:100svh; display:flex; flex-direction:column; justify-content:flex-end; padding:0 var(--pad-x) clamp(56px,9vh,104px); max-width:var(--max-w); margin:0 auto; }
+.lp-hero { min-height:100svh; display:flex; flex-direction:column; justify-content:center; padding:0 var(--pad-x); max-width:var(--max-w); margin:0 auto; }
 .lp-hero-name { font-family:var(--font-head); font-size:var(--text-hero); font-weight:500; line-height:.96; letter-spacing:-0.025em; text-transform:uppercase; color:var(--ink); }
 .lp-hero-title { font-family:var(--font-serif); font-size:var(--text-lg); color:var(--body); margin-top:22px; font-weight:400; max-width:50ch; }
 .lp-section { padding:var(--section-py) 0; border-top:1px solid var(--line); }
@@ -535,6 +535,8 @@ figcaption { margin-top:12px; font-size:var(--text-xs); color:var(--muted); lett
 /* Straight strip variant (replaces cred-marquee) */
 .cl-strip {
   background:var(--bg);
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
 }
 .cl-strip svg {
   aspect-ratio: 1440 / 72;

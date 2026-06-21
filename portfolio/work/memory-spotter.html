@@ -19,7 +19,7 @@
   }
 
   /* ── Floating dock clearance ── */
-  .cs-hero { padding-top: clamp(88px,11vh,132px); }
+  .cs-hero { padding-top: clamp(88px,11vh,132px); padding-bottom: clamp(16px,2vh,24px); }
 
   /* ══ Monitoring-Spotter component kit — green edition ══ */
   /* ── Monitoring-spotter numbered-column card grid ── */
@@ -398,29 +398,18 @@
 
 <a href="#main" class="skip-link">Skip to content</a>
 
-<!-- ── Floating Dock Nav ── -->
-<nav class="fdock" id="fdock" aria-label="Main">
-  <a href="../index.html" class="fdock__item" aria-label="Home">
-    <span class="fdock__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1v-9.5z"/><path d="M9 21V13h6v8"/></svg></span>
-    <span class="fdock__name">Home</span>
-    <span class="fdock__label">Home</span>
-  </a>
-  <a href="../index.html#work" class="fdock__item" aria-label="Work">
-    <span class="fdock__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
-    <span class="fdock__name">Work</span>
-    <span class="fdock__label">Work</span>
-  </a>
-  <div class="fdock__sep" role="separator"></div>
-  <a href="../about.html" class="fdock__item" aria-label="About">
-    <span class="fdock__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"/></svg></span>
-    <span class="fdock__name">About</span>
-    <span class="fdock__label">About</span>
-  </a>
-  <a href="mailto:umesh.indoriya@thoughtspot.com" class="fdock__item" aria-label="Contact">
-    <span class="fdock__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></span>
-    <span class="fdock__name">Contact</span>
-    <span class="fdock__label">Contact</span>
-  </a>
+<nav class="site-nav" role="navigation" aria-label="Main">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">Umesh Indoriya</a>
+    <div class="nav-links">
+      <a href="../index.html#work">Work</a>
+      <a href="../index.html#contact">Contact</a>
+    </div>
+    <a href="https://drive.google.com/file/d/1-habwW3CK3mAw6Fsq4u0IPKiehWsFm0N/view?usp=sharing" target="_blank" rel="noopener" style="font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); border:1px solid rgba(255,255,255,0.18); border-radius:100px; padding:8px 18px; text-decoration:none; white-space:nowrap; transition:background .2s, color .2s, border-color .2s;" onmouseover="this.style.borderColor='var(--ink)'; this.style.color='var(--ink)';" onmouseout="this.style.borderColor='rgba(255,255,255,0.18)'; this.style.color='var(--muted)';">Resume ↗</a>
+    <button class="nav-hamburger" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
 </nav>
 
 <main id="main">
@@ -428,24 +417,24 @@
 <!-- ══════════════════ HERO ══════════════════ -->
 <header class="cs-hero container">
   <div class="cs-hero__label fade-up">
-    <span class="label">ThoughtSpot &middot; AI Analytics &middot; 2025</span>
+    <span class="label">ThoughtSpot &middot; AI Analytics &middot; 2026</span>
     <span class="cs-hero__rule" aria-hidden="true"></span>
   </div>
-  <h1 class="fade-up">Building Memory<br><em>for Enterprise AI</em></h1>
-  <p class="cs-hero-sub fade-up">Defining how analysts create, manage, and scale business knowledge for Spotter</p>
+  <h1 class="fade-up" style="text-transform:none; font-size:clamp(34px,6.4vw,87px);">Building <span style="color:var(--accent);">Memory</span><br><em style="color:#fff;">for Enterprise AI</em></h1>
+  <p class="cs-hero-sub fade-up" style="font-family:var(--font); max-width:44ch;">Defining how analysts create, manage, and scale business knowledge for Spotter (AI agent)</p>
   <div class="cs-meta fade-up">
-    <div class="cs-meta-item"><div class="meta-label">Role</div><div class="meta-val">Lead UX Designer</div></div>
-    <div class="cs-meta-item"><div class="meta-label">Timeline</div><div class="meta-val">[Add Timeline]</div></div>
-    <div class="cs-meta-item"><div class="meta-label">Scope</div><div class="meta-val">IA &middot; Strategy &middot; Systems Design</div></div>
-    <div class="cs-meta-item"><div class="meta-label">Team</div><div class="meta-val">[Add Team]</div></div>
+    <div class="cs-meta-item"><div class="meta-label">Role</div><div class="meta-val">Senior Product Designer</div></div>
+    <div class="cs-meta-item"><div class="meta-label">Timeline</div><div class="meta-val">12 Weeks</div></div>
+    <div class="cs-meta-item"><div class="meta-label">Scope</div><div class="meta-val">Concept Definition &middot; IA &middot; End-to-End UX</div></div>
+    <div class="cs-meta-item"><div class="meta-label">Team</div><div class="meta-val">PM &middot; Engg.</div></div>
   </div>
 
   <!-- Project context card -->
-  <div class="card fade-up" style="margin-top:clamp(24px,3.5vh,40px); padding:clamp(18px,2.4vw,28px); border-left:3px solid var(--accent);">
+  <div class="card fade-up" style="margin-top:clamp(24px,3.5vh,40px); padding:clamp(18px,2.4vw,28px); border-left:3px solid var(--accent); border-radius:0;">
     <span class="card-label" style="margin-bottom:8px; display:block;">Project context</span>
-    <p style="font-size:13px; color:var(--muted); line-height:1.7; margin:0 0 10px;">Analysts are responsible for enabling Spotter for hundreds of business users, including leadership teams that rely on accurate answers for decision-making. To make Spotter effective, analysts must teach it business context.</p>
-    <p style="font-size:13px; color:var(--muted); line-height:1.7; margin:0 0 10px;">However, this context was fragmented across multiple surfaces, required ongoing manual maintenance, and was difficult to scale.</p>
-    <p style="font-size:13px; color:var(--muted); line-height:1.7; margin:0;">Memory introduced a new approach for capturing, organising, and scaling business knowledge &#8212; helping analysts provide richer context to Spotter with less manual effort.</p>
+    <p style="font-size:13px; color:#fff; line-height:1.7; margin:0 0 10px;">Analysts are responsible for enabling Spotter (AI agent) for hundreds of business users, including leadership teams that rely on accurate answers for decision-making. To make Spotter effective, analysts must teach it business context.</p>
+    <p style="font-size:13px; color:#fff; line-height:1.7; margin:0 0 10px;">However, this context was fragmented across multiple surfaces, required ongoing manual maintenance, and was difficult to scale.</p>
+    <p style="font-size:13px; color:#fff; line-height:1.7; margin:0;">Memory introduced a new approach for capturing, organising, and scaling business knowledge &#8212; helping analysts provide richer context to Spotter with less manual effort.</p>
 
     <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--line);">
       <span class="card-label" style="margin-bottom:12px; display:block;">Project deliverables</span>
@@ -495,18 +484,26 @@
     <div class="fade-up" style="padding:clamp(20px,3vh,32px) 0; border-bottom:1px solid var(--line); display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,4vw,56px); align-items:start;">
       <div>
         <h2>Why Spotter needs context</h2>
-        <p class="lead" style="margin-top:12px;">Data alone is not enough to answer business questions. Analysts continuously add business context through instructions, reference questions, and manually curated rules.</p>
+        <p class="lead" style="margin-top:12px;">Business context helps Spotter understand the data better and answer accurately. Analysts have to continuously add and manage context through instructions, reference questions, business terms, and more.</p>
       </div>
-      <div class="ph-slot">
-        <strong>Replace with your flow diagram</strong>
-        <code>images/context-flow-diagram.png</code>
+      <div style="border-radius:var(--radius); overflow:hidden;">
+        <img src="../images/context spotter.png" alt="Why Spotter needs context" style="width:100%; display:block;">
       </div>
     </div>
 
     <!-- 3. Analyst pain points -->
     <div class="fade-up" style="padding:clamp(20px,3vh,32px) 0; border-bottom:1px solid var(--line);">
-      <h2>Analyst pain points</h2>
-      <p class="lead" style="margin-top:12px; margin-bottom:clamp(14px,2vh,22px);">Today, analysts spend time creating and maintaining business context across multiple surfaces. As knowledge changes, keeping that context accurate becomes increasingly difficult.</p>
+      <!-- Header row: text left, image right -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,4vw,56px); align-items:center; margin-bottom:clamp(16px,2.5vh,24px);">
+        <div>
+          <h2>Analyst pain points</h2>
+          <p class="lead" style="margin-top:12px;">Today, analysts spend time creating and maintaining business context across multiple surfaces. As knowledge changes, keeping that context accurate becomes increasingly difficult.</p>
+        </div>
+        <div style="border-radius:var(--radius); overflow:hidden;">
+          <img src="../images/Sad analyst.png" alt="Analyst struggling with fragmented context" style="width:100%; display:block;">
+        </div>
+      </div>
+      <!-- Table spans full width below -->
       <table class="pain-table">
         <thead>
           <tr>
@@ -565,6 +562,11 @@
             <li style="font-size:13px; color:var(--muted); padding-left:12px; border-left:2px solid var(--accent-line);">Faster Spotter setup and adoption</li>
           </ul>
         </div>
+      </div>
+
+      <!-- Happy analyst image -->
+      <div style="border-radius:var(--radius); overflow:hidden; margin-bottom:20px; display:flex; justify-content:center;">
+        <img src="../images/happy analsyt.png" alt="Analyst with Memory — less manual effort" style="width:60%; display:block;">
       </div>
 
       <!-- Example cards — stacked below -->
@@ -657,7 +659,7 @@
         <div>
           <span class="tag tag-green" style="margin-bottom:10px; display:inline-block;">Design solution</span>
           <div class="r2-list__title">V1: How to create Memory from Liveboards</div>
-          <p class="r2-list__desc">How do analysts create memory? Source selection, scope definition, memory generation, trust and validation. Key challenge: generation takes 15&#8211;20 minutes &#8212; how do we keep analysts in control without making them wait?</p>
+          <p class="r2-list__desc">How do analysts create memory? Source selection, scope definition, memory generation, trust and validation.</p>
         </div>
         <div>
           <p style="font-family:var(--font-mono); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:8px;">Outcome</p>
@@ -1185,27 +1187,46 @@
       </div>
     </div>
 
-    <div class="impact-grid fade-up">
-      <div class="impact-card impact-card--qual">
-        <span class="impact-type">Qualitative</span>
-        <div class="need" style="margin-bottom:0;">
-          <span class="need-label">Customer quotes needed</span>
-          What did analysts say after using Memory? Even one direct quote transforms this from a claim into evidence. Reach out to [Customer Success / PM] for customer feedback from the first weeks post-launch.
+    <!-- Adoption -->
+    <div class="fade-up" style="margin-top:clamp(28px,4vh,44px);">
+      <p style="font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin:0 0 16px;">Adoption</p>
+      <div style="border-top:2px solid var(--accent); padding-top:14px;">
+        <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 8px;"><span style="font-size:clamp(36px,5vw,64px); font-weight:800; color:var(--accent); line-height:1; display:block; margin-bottom:8px;">2&#215;</span>increase in Memory creation among top customers</p>
+        <p style="font-size:13px; color:var(--muted); line-height:1.7; margin:0;">Within the last 15 days of May, Memory creation doubled across some of our most active customers, indicating growing adoption and continued investment in improving Spotter&#8217;s responses.</p>
+      </div>
+    </div>
+
+    <!-- Validation -->
+    <div class="fade-up" style="margin-top:clamp(28px,4vh,44px);">
+      <p style="font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin:0 0 16px;">Validation</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:clamp(16px,3vw,32px);">
+        <div style="border-top:2px solid var(--accent); padding-top:14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 8px; display:flex; align-items:center; gap:8px;"><span style="color:var(--accent);">&#10003;</span> Customers trusted Memory more than expected</p>
+          <p style="font-size:13px; color:var(--muted); line-height:1.7; margin:0;">Many customers treated Memory generated from Liveboards as highly reliable because it originated from one of their most trusted data assets. This validated our decision to start with Liveboards as the first Memory source.</p>
+        </div>
+        <div style="border-top:2px solid var(--accent); padding-top:14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 8px; display:flex; align-items:center; gap:8px;"><span style="color:var(--accent);">&#10003;</span> Conversation became the preferred management surface</p>
+          <p style="font-size:13px; color:var(--muted); line-height:1.7; margin:0;">Customers responded positively to the ability to update Memory directly from Spotter conversations, reinforcing the importance of keeping Memory close to the workflows where users already interact with AI.</p>
         </div>
       </div>
-      <div class="impact-card impact-card--quant">
-        <span class="impact-type">Quantitative</span>
-        <div class="impact-metric">2&#215;</div>
-        <p class="impact-desc">Memory adoption doubled for at least one customer over several months post-launch.</p>
-        <div class="need" style="margin-top:16px; margin-bottom:0;">
-          <span class="need-label">Add specifics</span>
-          Which customer? Over what timeframe? How was adoption measured (memory entries created, users who added memory, models with memory enabled)?
+    </div>
+
+    <!-- Key Learnings After Launch -->
+    <div class="fade-up" style="margin-top:clamp(32px,5vh,56px);">
+      <p style="font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin:0 0 16px;">Key Learnings After Launch</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:clamp(16px,3vw,32px);">
+        <div style="border-top:1px solid var(--line); padding-top:14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 8px; display:flex; align-items:center; gap:8px;"><span style="color:#f59e0b; font-size:16px; font-weight:900; line-height:1;">!</span> Visibility matters as much as generation</p>
+          <p style="font-size:13px; color:var(--muted); line-height:1.7; margin:0;">Our initial focus was helping analysts create Memory. Customer feedback showed that understanding what is currently stored is equally important for building trust and confidence in AI responses.</p>
         </div>
-      </div>
-      <div class="impact-card impact-card--strat">
-        <span class="impact-type">Strategic</span>
-        <div class="impact-metric" style="font-size:clamp(18px,2.2vw,28px); margin-bottom:14px; line-height:1.2;">Foundation for future Memory initiatives</div>
-        <p class="impact-desc">The two-tier architecture and the trust-first sequencing became the principles that all subsequent Memory work was built on. The IA outlived V1.</p>
+        <div style="border-top:1px solid var(--line); padding-top:14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 8px; display:flex; align-items:center; gap:8px;"><span style="color:#f59e0b; font-size:16px; font-weight:900; line-height:1;">!</span> A dedicated management page is not enough</p>
+          <p style="font-size:13px; color:var(--muted); line-height:1.7; margin:0;">Many users primarily interact with Spotter through chat and never visit Memory management surfaces. Discoverability and management need to exist within the conversational workflow itself.</p>
+        </div>
+        <div style="border-top:1px solid var(--line); padding-top:14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 8px; display:flex; align-items:center; gap:8px;"><span style="color:#f59e0b; font-size:16px; font-weight:900; line-height:1;">!</span> Conversation proved to be the strongest entry point</p>
+          <p style="font-size:13px; color:var(--muted); line-height:1.7; margin:0;">As anticipated, users found Memory through conversations more naturally than through standalone pages. Introducing conversational entry points earlier could have accelerated awareness and adoption across customers.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -1215,36 +1236,26 @@
 <section class="section section--alt">
   <div class="container">
     <div class="s-head fade-up">
-      <div class="s-head__top">
-        <span class="s-num">Reflection</span>
-        <h2>What this project taught me about AI product design</h2>
+      <div class="s-head__top" style="flex-direction:column; align-items:flex-start; gap:10px;">
+        <div class="stage-label"><span class="stage-num">Reflection</span></div>
+        <h2>My Learnings from this project</h2>
       </div>
     </div>
 
-    <div class="r2-keys fade-up">
-      <div class="r2-keys__col">
-        <div class="r2-key r2-key--accent">
-          <span class="r2-key__label">01</span>
-          <p style="font-family:var(--font-head); font-size:clamp(18px,2vw,24px); font-weight:500; text-transform:uppercase; color:var(--ink); margin-bottom:12px; line-height:1.1;">Trust before automation</p>
-          <p>The most powerful AI feature isn&#8217;t the one with the most capability &#8212; it&#8217;s the one users actually trust. Choosing Liveboards over conversations meant slower automation but faster adoption. In an early-stage AI product, that tradeoff is almost always correct.</p>
-        </div>
-        <div class="r2-key r2-key--accent">
-          <span class="r2-key__label">03</span>
-          <p style="font-family:var(--font-head); font-size:clamp(18px,2vw,24px); font-weight:500; text-transform:uppercase; color:var(--ink); margin-bottom:12px; line-height:1.1;">Information architecture outlives features</p>
-          <p>The two-tier Personal + Central model was tested by platform changes nobody anticipated: new agents, tool calls, agent-level memory. The flat structure was right not because of what we knew, but because of what we didn&#8217;t. Simpler architectures survive better.</p>
-        </div>
+    <div class="r2-keys fade-up" style="grid-template-columns:1fr 1fr;">
+      <div class="r2-key r2-key--accent">
+        <span class="r2-key__label">01</span>
+        <p style="font-size:15px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink); margin:0 0 12px; line-height:1.3;">Creating clarity before creating solutions</p>
+        <p style="font-size:13px; color:var(--body); line-height:1.7; margin:0 0 14px;">For the first few weeks, I wasn&#8217;t designing screens &#8212; I was collecting context. There were more questions than answers: What is Memory? Why does it exist? How should it work? At times, it felt difficult to show progress because the work was happening through exploration, alignment, and synthesis rather than visible designs.</p>
+        <p style="font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin:0 0 4px;">Learning</p>
+        <p style="font-size:13px; color:var(--body); line-height:1.65; margin:0;">Not every design problem starts with interfaces. Sometimes the most valuable contribution is creating clarity from ambiguity.</p>
       </div>
-      <div class="r2-keys__col">
-        <div class="r2-key">
-          <span class="r2-key__label">02</span>
-          <p style="font-family:var(--font-head); font-size:clamp(18px,2vw,24px); font-weight:500; text-transform:uppercase; color:var(--ink); margin-bottom:12px; line-height:1.1;">Knowledge systems are living systems</p>
-          <p>Business context evolves continuously. A design that treats knowledge as static configuration will fail. Memory had to be designed with change as a first-class feature &#8212; updates, resolutions, provenance.</p>
-        </div>
-        <div class="r2-key">
-          <span class="r2-key__label">04</span>
-          <p style="font-family:var(--font-head); font-size:clamp(18px,2vw,24px); font-weight:500; text-transform:uppercase; color:var(--ink); margin-bottom:12px; line-height:1.1;">Product adoption requires workflow integration</p>
-          <p>A feature that lives only in a settings page will be used by the analyst who looks for it. Entry points in Data Model, Liveboards, and Spotter brought Memory to analysts wherever they already worked.</p>
-        </div>
+      <div class="r2-key">
+        <span class="r2-key__label">02</span>
+        <p style="font-size:15px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink); margin:0 0 12px; line-height:1.3;">Designing in a moving landscape</p>
+        <p style="font-size:13px; color:var(--body); line-height:1.7; margin:0 0 14px;">While defining Memory, the AI industry was evolving almost weekly. New approaches, capabilities, and terminology were constantly emerging. Waiting for perfect certainty wasn&#8217;t an option. We had to make decisions, establish foundations, and ship while the landscape continued to change.</p>
+        <p style="font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin:0 0 4px;">Learning</p>
+        <p style="font-size:13px; color:var(--body); line-height:1.65; margin:0;">In fast-moving domains, speed and adaptability are as important as design quality. The goal is not to predict the future perfectly, but to build foundations that can evolve with it.</p>
       </div>
     </div>
   </div>
@@ -1255,7 +1266,7 @@
   <div class="next-inner">
     <div>
       <span class="next-tag">What happened next</span>
-      <p class="next-title">V1 laid the foundation.<br><em>V2 solved transparency.</em></p>
+      <p class="next-title" style="font-size:clamp(18px,2.2vw,28px);">V1 laid the foundation.<br><em>V2 will solve transparency (WIP)</em></p>
       <p style="margin-top:20px; color:var(--body); max-width:44ch; font-size:var(--text-base); line-height:1.65;">After launch, we expected Phase 2 to focus on conversational memory. Instead, user feedback surfaced a different problem: <strong>analysts couldn&#8217;t see what Spotter already knew.</strong> Transparency and awareness became the sequel &#8212; a separate initiative built on the foundation Memory V1 established.</p>
       <a href="monitoring-spotter.html" class="next-cta">View Monitoring Spotter &rarr;</a>
     </div>

@@ -172,7 +172,8 @@
   .r2-diagram-wide svg{width:100%;max-width:740px;display:block;}
   .r2-diagram-cap{font-size:13px;color:var(--muted);margin:14px 0 0;}
   /* context slide — two-column table layout */
-  .ctx-title{font-size:clamp(52px,7vw,100px);font-weight:500;letter-spacing:-.02em;line-height:1;margin:0 0 clamp(28px,4vh,52px);}
+  .ctx-title{font-size:clamp(22px,2.8vw,36px);font-weight:700;letter-spacing:.06em;text-transform:uppercase;line-height:1.2;margin:0 0 clamp(20px,3vh,32px);}
+  .ctx-gap-img{filter:invert(1);}
   .ctx-row{display:grid;grid-template-columns:220px 1fr;gap:clamp(24px,3vw,48px);padding:clamp(20px,3vh,32px) 0;border-top:1px solid var(--line);}
   .ctx-row:last-of-type{border-bottom:1px solid var(--line);}
   .ctx-row__label{font-family:var(--font-head);font-size:16px;font-weight:700;letter-spacing:-.01em;text-transform:uppercase;color:var(--muted);line-height:1.2;padding-top:2px;}
@@ -325,29 +326,18 @@
 
 <a href="#main" class="skip-link">Skip to content</a>
 
-<!-- ── Floating Dock Nav ── -->
-<nav class="fdock" id="fdock" aria-label="Main">
-  <a href="../index.html" class="fdock__item" aria-label="Home">
-    <span class="fdock__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1v-9.5z"/><path d="M9 21V13h6v8"/></svg></span>
-    <span class="fdock__name">Home</span>
-    <span class="fdock__label">Home</span>
-  </a>
-  <a href="../index.html#work" class="fdock__item" aria-label="Work">
-    <span class="fdock__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
-    <span class="fdock__name">Work</span>
-    <span class="fdock__label">Work</span>
-  </a>
-  <div class="fdock__sep" role="separator"></div>
-  <a href="../about.html" class="fdock__item" aria-label="About">
-    <span class="fdock__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"/></svg></span>
-    <span class="fdock__name">About</span>
-    <span class="fdock__label">About</span>
-  </a>
-  <a href="mailto:umesh.indoriya@thoughtspot.com" class="fdock__item" aria-label="Contact">
-    <span class="fdock__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></span>
-    <span class="fdock__name">Contact</span>
-    <span class="fdock__label">Contact</span>
-  </a>
+<nav class="site-nav" role="navigation" aria-label="Main">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">Umesh Indoriya</a>
+    <div class="nav-links">
+      <a href="../index.html#work">Work</a>
+      <a href="../index.html#contact">Contact</a>
+    </div>
+    <a href="https://drive.google.com/file/d/1-habwW3CK3mAw6Fsq4u0IPKiehWsFm0N/view?usp=sharing" target="_blank" rel="noopener" style="font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); border:1px solid rgba(255,255,255,0.18); border-radius:100px; padding:8px 18px; text-decoration:none; white-space:nowrap; transition:background .2s, color .2s, border-color .2s;" onmouseover="this.style.borderColor='var(--ink)'; this.style.color='var(--ink)';" onmouseout="this.style.borderColor='rgba(255,255,255,0.18)'; this.style.color='var(--muted)';">Resume ↗</a>
+    <button class="nav-hamburger" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
 </nav>
 
 <main id="main">
@@ -452,15 +442,36 @@
       <span class="cs-hero__rule"></span>
       <span class="label" style="color:var(--muted);">ThoughtSpot · AI Analytics</span>
     </div>
-    <h1 class="fade-up" style="margin:8px 0 0;">Designing Monitoring for Spotter, ThoughtSpot&rsquo;s Conversational AI</h1>
+    <h1 class="fade-up" style="margin:8px 0 0; text-transform:none;">Conversation monitoring system for Analysts</h1>
     <p class="cs-hero-sub fade-up">Analysts are responsible for Spotter&rsquo;s accuracy, but once it is deployed they have limited visibility into how it performs. I designed a monitoring experience that helps them find important conversations, understand failures, and improve Spotter through coaching.</p>
     <div class="cs-meta fade-up" style="display:grid;grid-template-columns:repeat(3,auto);row-gap:clamp(20px,3vh,32px);column-gap:clamp(32px,5vw,72px);justify-content:start;">
       <div class="cs-meta-item"><p class="meta-label">Role</p><p class="meta-val">Product Designer</p></div>
-      <div class="cs-meta-item"><p class="meta-label">Scope</p><p class="meta-val">UX Strategy &middot; IA &middot; Product Design</p></div>
+      <div class="cs-meta-item"><p class="meta-label">Scope</p><p class="meta-val">IA &middot; End-to-End UX Design</p></div>
       <div></div>
       <div class="cs-meta-item"><p class="meta-label">Users</p><p class="meta-val">Analysts</p></div>
       <div class="cs-meta-item"><p class="meta-label">Timeline</p><p class="meta-val">8 Weeks</p></div>
       <div class="cs-meta-item"><p class="meta-label">Team</p><p class="meta-val">PM &middot; Engineering</p></div>
+    </div>
+
+    <div class="card fade-up" style="margin-top:clamp(24px,3.5vh,40px); padding:clamp(18px,2.4vw,28px); border-left:3px solid var(--accent); border-radius:0;">
+      <span class="card-label" style="margin-bottom:8px; display:block;">Project context</span>
+      <p style="font-size:13px; color:#fff; line-height:1.7; margin:0 0 10px;">Once Spotter was deployed, analysts had no clear way to understand whether it was succeeding. Questions about adoption, answer quality, user trust, and configuration effectiveness required navigating multiple disconnected tools and datasets.</p>
+      <p style="font-size:13px; color:#fff; line-height:1.7; margin:0 0 10px;">Without visibility, improving Spotter became reactive and difficult to scale.</p>
+      <p style="font-size:13px; color:#fff; line-height:1.7; margin:0;">Monitoring created a single destination for understanding AI performance, identifying opportunities for improvement, and continuously refining the assistant over time.</p>
+
+      <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--line);">
+        <span class="card-label" style="margin-bottom:12px; display:block;">Project deliverables</span>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:clamp(12px,2vw,24px);">
+          <div>
+            <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 4px;">Solved IA</p>
+            <p style="font-size:12px; color:var(--muted); line-height:1.6; margin:0;">Brought all Spotter activities under one consolidated panel.</p>
+          </div>
+          <div>
+            <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 4px;">Conversation Monitoring</p>
+            <p style="font-size:12px; color:var(--muted); line-height:1.6; margin:0;">Designed end-to-end UX workflow to find, assess, and take action on conversations.</p>
+          </div>
+        </div>
+      </div>
     </div>
     </div>
   </div>
@@ -773,9 +784,9 @@
 
 
 <!-- ───────── V2 · FINAL SOLUTIONS banner ───────── -->
-<section class="" style="padding:clamp(32px,5vh,64px) 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
-  <div class="wrap fade-up">
-    <h2 style="font-family:var(--font-head);font-size:clamp(48px,7vw,96px);font-weight:600;text-transform:uppercase;letter-spacing:-.03em;line-height:.95;margin:0;color:var(--ink);">Final Solutions</h2>
+<section class="" style="padding:clamp(48px,8vh,96px) 0 clamp(40px,6vh,72px); border-top:1px solid var(--line); background:#111115;">
+  <div class="wrap fade-up" style="text-align:center;">
+    <h2 style="font-family:var(--font-head);font-size:clamp(28px,3.4vw,44px);font-weight:800;letter-spacing:-.02em;line-height:1.08;margin:0;color:var(--ink);text-transform:uppercase;text-decoration:underline;text-decoration-color:#e63329;text-underline-offset:6px;text-decoration-thickness:3px;">Final Solutions</h2>
   </div>
 </section>
 

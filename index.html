@@ -1,0 +1,217 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f4f4f1">
+<meta name="description" content="Umesh Indoriya — Lead UX Designer at ThoughtSpot, designing AI-native analytics products people can trust.">
+<title>Umesh Indoriya — Lead UX Designer</title>
+<script>document.documentElement.classList.add('js')</script>
+<link rel="stylesheet" href="css/design.css">
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to content</a>
+
+<!-- ── Nav ── -->
+<nav class="site-nav" role="navigation" aria-label="Main">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">Umesh Indoriya</a>
+    <div class="nav-links">
+      <a href="index.html#work">Work</a>
+      <a href="#contact">Contact</a>
+    </div>
+    <a href="https://drive.google.com/file/d/1-habwW3CK3mAw6Fsq4u0IPKiehWsFm0N/view?usp=sharing" target="_blank" rel="noopener" style="font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); border:1px solid rgba(255,255,255,0.18); border-radius:100px; padding:8px 18px; text-decoration:none; white-space:nowrap; transition:background .2s, color .2s, border-color .2s;" onmouseover="this.style.borderColor='var(--ink)'; this.style.color='var(--ink)';" onmouseout="this.style.borderColor='rgba(255,255,255,0.18)'; this.style.color='var(--muted)';">Resume ↗</a>
+    <button class="nav-hamburger" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- Mobile drawer -->
+<div class="nav-drawer" role="dialog" aria-label="Navigation">
+  <a href="index.html#work">Work</a>
+  <a href="#contact">Contact</a>
+</div>
+
+<style>
+  /* ── Work card list ── */
+  .work-list { display:flex; flex-direction:column; gap:clamp(12px,2vh,20px); margin-top:clamp(20px,3vh,36px); }
+  .work-list-card {
+    display:grid;
+    grid-template-columns:1fr auto;
+    grid-template-rows:auto auto;
+    gap:16px clamp(24px,4vw,56px);
+    align-items:start;
+    background:var(--bg);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:clamp(24px,3.5vw,44px);
+    text-decoration:none;
+    transition:border-color .2s, box-shadow .2s;
+    position:relative;
+  }
+  .work-list-card:hover { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+  .work-list-card:hover .pc-title { color:var(--accent); }
+  .work-list-card .wc-left { grid-column:1; grid-row:1; }
+  .work-list-card .wc-right { grid-column:2; grid-row:1; display:flex; flex-direction:column; align-items:flex-end; gap:12px; }
+  .work-list-card .wc-bottom-left { grid-column:1; grid-row:2; }
+  .work-list-card .wc-bottom-right { grid-column:2; grid-row:2; display:flex; align-items:flex-end; justify-content:flex-end; }
+  .work-list-card .pc-title { font-size:clamp(18px,2.2vw,28px); transition:color .2s; text-transform:none; }
+  .work-list-card .pc-desc { max-width:60ch; font-size:14px; line-height:1.65; color:var(--body); margin:0; }
+  .work-list-card .pc-tags { display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end; }
+  .work-list-card .pc-cta { font-size:12px; letter-spacing:2px; }
+  @media(max-width:680px){
+    .work-list-card { grid-template-columns:1fr; }
+    .work-list-card .wc-right, .work-list-card .wc-bottom-right { grid-column:1; justify-content:flex-start; align-items:flex-start; }
+    .work-list-card .pc-tags { justify-content:flex-start; }
+  }
+</style>
+
+<main id="main">
+
+<!-- ── Hero ── -->
+<header id="heroSection">
+  <div class="magnet-lines" id="magnetLines" aria-hidden="true"></div>
+  <div class="lp-hero">
+    <div class="fade-up lp-hero-content">
+      <p style="font-family:var(--font-head); font-size:clamp(18px,2.4vw,32px); font-weight:700; text-transform:uppercase; letter-spacing:.02em; color:var(--ink); margin:0 0 4px;">Hi, I am</p>
+      <h1 class="lp-hero-name" style="white-space:nowrap; line-height:.95;">Umesh Indoriya.</h1>
+      <p class="lp-hero-title" style="margin-top:10px;">Senior Product Designer ✦ Enterprise ✦ AI.</p>
+      <p style="font-size:clamp(14px,1.5vw,18px); color:var(--ink); line-height:1.6; max-width:44ch; margin:12px 0 0; font-weight:500;">Currently at ThoughtSpot, designing AI experiences that help businesses learn, reason, and make better decisions through data.</p>
+    </div>
+  </div>
+</header>
+
+<!-- ── Marquee strip ── -->
+<div class="curved-loop cl-strip" id="curvedLoop" aria-hidden="true">
+  <svg viewBox="0 0 1440 72" id="clSvg">
+    <text id="clMeasure" font-size="28" font-family="'Oswald',sans-serif" font-weight="600" letter-spacing="2" style="visibility:hidden;opacity:0;pointer-events:none"></text>
+    <defs>
+      <path id="clPath" d="M-200,52 L1640,52" fill="none"/>
+    </defs>
+    <text font-weight="600" font-size="28" font-family="'Oswald',sans-serif" letter-spacing="2" fill="#ffffff">
+      <textPath id="clTextPath" href="#clPath" startOffset="0px" xml:space="preserve"></textPath>
+    </text>
+  </svg>
+</div>
+
+<!-- ── Selected Work ── -->
+<section class="lp-section" id="work" style="scroll-margin-top:150px;">
+  <div class="container">
+    <p style="font-family:var(--font-mono); font-size:14px; letter-spacing:3px; text-transform:uppercase; color:var(--ink); margin-bottom:0; font-weight:600;">Selected Works</p>
+    <div class="work-list">
+
+      <a href="work/memory-spotter.html" class="work-list-card fade-up">
+        <div class="wc-left">
+          <p class="pc-eyebrow">ThoughtSpot &middot; AI Analytics &middot; 2026</p>
+          <h3 class="pc-title">🧠 Memory for Enterprise AI</h3>
+        </div>
+        <div class="wc-right">
+          <div class="pc-tags">
+            <span class="tag tag-line">AI</span>
+            <span class="tag tag-line">Architecture</span>
+            <span class="tag tag-line">Product Design</span>
+            <span class="tag tag-line">End-to-End UX</span>
+          </div>
+        </div>
+        <div class="wc-bottom-left">
+          <p class="pc-desc">Designing a scalable memory system that allows AI to learn from business context and improve its responses over time.</p>
+        </div>
+        <div class="wc-bottom-right">
+          <span class="pc-cta">View case study &rarr;</span>
+        </div>
+      </a>
+
+      <a href="work/monitoring-spotter.html" class="work-list-card fade-up">
+        <div class="wc-left">
+          <p class="pc-eyebrow">ThoughtSpot &middot; AI Analytics &middot; 2025</p>
+          <h3 class="pc-title">🔍 Conversation monitoring system</h3>
+        </div>
+        <div class="wc-right">
+          <div class="pc-tags">
+            <span class="tag tag-line">IA</span>
+            <span class="tag tag-line">Product Design</span>
+            <span class="tag tag-line">End-to-End UX</span>
+          </div>
+        </div>
+        <div class="wc-bottom-left">
+          <p class="pc-desc">Helping analysts understand how their AI assistant is performing, where it&#8217;s failing, and how to continuously improve it after deployment.</p>
+        </div>
+        <div class="wc-bottom-right">
+          <span class="pc-cta">View case study &rarr;</span>
+        </div>
+      </a>
+
+    </div>
+
+    <!-- Other Works -->
+    <p style="font-family:var(--font-mono); font-size:14px; letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin:clamp(40px,6vh,64px) 0 0; font-weight:600;">Other Works</p>
+    <div class="work-list" style="margin-top:clamp(12px,2vh,20px);">
+
+      <a href="https://www.behance.net/gallery/154686993/Project-management-software-Semester-Thesis" target="_blank" rel="noopener" class="work-list-card fade-up">
+        <div class="wc-left">
+          <p class="pc-eyebrow">Semester Thesis &middot; IIT Guwahati</p>
+          <h3 class="pc-title" style="font-size:clamp(18px,2.2vw,28px);">🏛️ A project management platform for architecture offices</h3>
+        </div>
+        <div class="wc-right">
+          <div class="pc-tags">
+            <span class="tag tag-line">UX Design</span>
+            <span class="tag tag-line">Product Design</span>
+            <span class="tag tag-line">Thesis</span>
+          </div>
+        </div>
+        <div class="wc-bottom-left">
+          <p class="pc-desc">To successfully manage work, schedule, and coordinate projects while considering the well-being of the user in day-to-day working.</p>
+        </div>
+        <div class="wc-bottom-right">
+          <span class="pc-cta">View on Behance ↗</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ── Contact ── -->
+<section id="contact" style="background:var(--bg); border-top:1px solid var(--line); padding:clamp(64px,10vh,120px) 0;">
+  <div class="container" style="display:grid; grid-template-columns:1fr 1fr; gap:clamp(32px,6vw,80px); align-items:start;">
+    <div>
+      <p style="font-family:var(--font-mono); font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin:0 0 20px;">● Contact</p>
+      <h2 style="font-family:var(--font-head); font-size:clamp(36px,6vw,80px); font-weight:700; text-transform:uppercase; color:var(--ink); line-height:1; margin:0 0 32px;">Get in touch</h2>
+      <a href="https://drive.google.com/file/d/1-habwW3CK3mAw6Fsq4u0IPKiehWsFm0N/view?usp=sharing" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:8px; border:1px solid var(--ink); border-radius:100px; padding:12px 24px; font-size:13px; font-weight:600; color:var(--ink); text-decoration:none; transition:background .2s, color .2s;" onmouseover="this.style.background='var(--ink)'; this.style.color='var(--bg)';" onmouseout="this.style.background=''; this.style.color='var(--ink)';">View Resume ↗</a>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:0;">
+      <a href="mailto:ar.indoriya@gmail.com" style="display:flex; align-items:center; gap:14px; padding:20px 0; border-bottom:1px solid var(--line); text-decoration:none; color:var(--ink); font-size:15px; transition:color .2s;" onmouseover="this.style.color='var(--accent)';" onmouseout="this.style.color='var(--ink)';">
+        <span style="font-size:18px;">✉</span> ar.indoriya@gmail.com
+      </a>
+      <div style="display:flex; align-items:center; gap:14px; padding:20px 0; border-bottom:1px solid var(--line); color:var(--ink); font-size:15px;">
+        <span style="font-size:18px;">✆</span> +91 79829 12500
+      </div>
+      <div style="display:flex; align-items:center; gap:14px; padding:20px 0; border-bottom:1px solid var(--line); color:var(--muted); font-size:15px;">
+        <span style="font-size:18px;">◎</span> Bangalore, India
+      </div>
+      <a href="https://www.linkedin.com/in/umesh-indoriya-b886a5259/" target="_blank" rel="noopener" style="display:flex; align-items:center; gap:14px; padding:20px 0; text-decoration:none; color:var(--ink); font-size:15px; transition:color .2s;" onmouseover="this.style.color='var(--accent)';" onmouseout="this.style.color='var(--ink)';">
+        <span style="font-size:18px;">in</span> LinkedIn ↗
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<div class="footer-wrap">
+  <footer class="site-footer">
+    <span class="footer-logo">Umesh Indoriya</span>
+    <span class="footer-copy">©2025 — Lead UX Designer</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="https://www.linkedin.com/in/umesh-indoriya-b886a5259/" target="_blank" rel="noopener">LinkedIn ↗</a>
+    </nav>
+  </footer>
+</div>
+
+<script src="js/site.js"></script>
+
+</body>
+</html>

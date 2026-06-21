@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#09090b">
+<meta name="description" content="Memory Foundations for Spotter — a case study on building a scalable memory architecture that makes business context dynamic, not static.">
+<title>Memory Foundations for Spotter — Umesh Indoriya</title>
+<script>document.documentElement.classList.add('js')</script>
+<link rel="stylesheet" href="../css/design.css">
+<style>
+  /* ── Green accent override for Memory ── */
+  :root {
+    --accent:      #34d399;
+    --accent-2:    #059669;
+    --accent-soft: rgba(52,211,153,.12);
+    --accent-line: rgba(52,211,153,.28);
+    --on-accent:   #022c22;
+  }
+
+  /* ── Floating dock clearance ── */
+  .cs-hero { padding-top: clamp(88px,11vh,132px); padding-bottom: clamp(16px,2vh,24px); }
+
+  /* ══ Monitoring-Spotter component kit — green edition ══ */
+  /* ── Monitoring-spotter numbered-column card grid ── */
+  .ms-grid { display:grid; gap:1px; background:var(--line); border:1px solid var(--line); }
+  .ms-grid--2 { grid-template-columns:repeat(2,1fr); }
+  .ms-grid--3 { grid-template-columns:repeat(3,1fr); }
+  .ms-grid--4 { grid-template-columns:repeat(4,1fr); }
+  .ms-grid--6 { grid-template-columns:repeat(6,1fr); }
+  .ms-cell { background:var(--bg); padding:20px 18px; }
+  .section--alt .ms-cell { background:var(--paper); }
+  .ms-num {
+    font-family:var(--font); font-size:13px; font-weight:800; letter-spacing:0;
+    color:#fff; background:var(--accent); width:26px; height:26px; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center;
+    margin-bottom:14px; flex-shrink:0;
+  }
+  .ms-title {
+    font-family:var(--font-head); font-size:14px; font-weight:600;
+    text-transform:uppercase; letter-spacing:.03em; color:var(--ink); margin:0 0 10px;
+  }
+  .ms-body { font-size:13px; color:var(--body); line-height:1.6; margin:0; }
+  @media(max-width:680px){
+    .ms-grid--3,.ms-grid--4,.ms-grid--6 { grid-template-columns:repeat(2,1fr); }
+    .ms-grid--6 > .ms-cell:last-child { grid-column:1/-1; }
+  }
+
+  /* s-head sizing to match MS */
+  .s-head h2 { font-size:clamp(28px,3.4vw,44px); max-width:30ch; line-height:1.08; letter-spacing:-.02em; }
+  .s-head__top .s-num { color:var(--accent); }
+
+  /* r2-list — clean numbered rows, no card chrome */
+  .r2-list { margin-top:8px; border-top:1px solid var(--line); }
+  .r2-list__row { display:grid; grid-template-columns:60px 1fr 1.3fr; gap:clamp(20px,4vw,56px); align-items:start; padding:clamp(22px,3vh,34px) 0; border-bottom:1px solid var(--line); }
+  /* compact variant — tighter rows for scan-friendly reading */
+  .r2-list--compact .r2-list__row { padding:clamp(12px,1.8vh,18px) 0; gap:clamp(16px,3vw,40px); }
+  .r2-list--compact .r2-list__num { font-size:13px; }
+  .r2-list--compact .r2-list__title { font-size:clamp(14px,1.5vw,17px); }
+  .r2-list--compact .r2-list__desc { font-size:13px; line-height:1.5; }
+  .r2-list__row--tight { grid-template-columns:52px 1fr; }
+  .r2-list__num { font-size:15px; font-weight:700; color:#c2c1ba; font-variant-numeric:tabular-nums; }
+  .r2-list__num--accent { color:var(--accent-2); }
+  .r2-list__title { font-size:clamp(17px,1.9vw,22px); font-weight:800; letter-spacing:-.015em; color:var(--ink); }
+  .r2-list__desc { font-size:14.5px; line-height:1.62; color:var(--body); margin:0; }
+
+  /* r2-cols — column key-points with top rule, no card box */
+  .r2-cols { display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(22px,3vw,44px); margin-top:8px; }
+  .r2-cols--2 { grid-template-columns:1fr 1fr; }
+  .r2-cols--4 { grid-template-columns:repeat(4,1fr); }
+  .r2-cols__item { border-top:2px solid var(--faint); padding-top:16px; }
+  .r2-cols__item--accent { border-top-color:var(--accent); }
+  .r2-cols__label { display:block; font-size:11px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:#9a9a93; margin-bottom:10px; }
+  .r2-cols__item--accent .r2-cols__label { color:var(--accent); }
+  .r2-cols p { margin:0; font-size:14px; line-height:1.6; color:var(--body); }
+
+  /* r2-keys — two-col card-free key points */
+  .r2-keys { display:grid; grid-template-columns:1fr 1fr; gap:clamp(28px,5vw,72px); margin:clamp(28px,4.5vh,48px) 0; align-items:start; }
+  .r2-keys__col { display:grid; gap:clamp(22px,3vh,34px); align-content:start; }
+  .r2-key { border-top:2px solid var(--ink); padding-top:14px; }
+  .r2-key--accent { border-top-color:var(--accent); }
+  .r2-key__label { display:block; font-size:11px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:#9a9a93; margin-bottom:10px; }
+  .r2-key--accent .r2-key__label { color:var(--accent); }
+  .r2-keys p { margin:0; font-size:15px; line-height:1.6; color:var(--body); }
+
+  /* ctx-rows — editorial table layout */
+  .ctx-title { font-size:clamp(42px,6vw,80px); font-weight:500; letter-spacing:-.02em; line-height:1; margin:0 0 clamp(24px,4vh,48px); }
+  .ctx-row { display:grid; grid-template-columns:220px 1fr; gap:clamp(24px,3vw,48px); padding:clamp(20px,3vh,32px) 0; border-top:1px solid var(--line); }
+  .ctx-row:last-of-type { border-bottom:1px solid var(--line); }
+  .ctx-row__label { font-family:var(--font-head); font-size:15px; font-weight:700; letter-spacing:-.01em; text-transform:uppercase; color:var(--muted); line-height:1.2; padding-top:2px; }
+  .ctx-row__content { font-size:15px; line-height:1.65; color:var(--body); }
+  .ctx-row__content p { margin:0; }
+  .ctx-indent { margin-top:16px; padding:14px 18px; border-left:2px solid var(--accent); }
+  .ctx-indent__label { font-family:var(--font-mono); font-size:10px; font-weight:500; letter-spacing:.15em; text-transform:uppercase; color:var(--accent); margin:0 0 10px; display:block; }
+
+  @media(max-width:680px){
+    .ctx-row { grid-template-columns:1fr; gap:10px; }
+    .r2-cols,.r2-cols--2,.r2-cols--4 { grid-template-columns:1fr; }
+    .r2-keys { grid-template-columns:1fr; gap:28px; }
+    .r2-list__row { grid-template-columns:1fr; gap:6px; }
+    .r2-list__row--tight { grid-template-columns:52px 1fr; }
+  }
+
+  /* ── Core thesis block ── */
+  .thesis {
+    border-top: 2px solid var(--accent);
+    padding-top: clamp(24px,3.5vh,40px);
+    margin-top: clamp(40px,6vh,72px);
+  }
+  .thesis-contrast {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: clamp(16px,2.5vw,36px);
+    align-items: center;
+    margin-top: clamp(20px,3vh,32px);
+  }
+  .thesis-side {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: clamp(20px,2.6vw,30px);
+    background: var(--paper);
+  }
+  .thesis-side--from { opacity: .65; }
+  .thesis-side--to   { border-color: var(--accent-line); background: var(--accent-soft); }
+  .thesis-arrow { font-size: clamp(20px,2.5vw,32px); color: var(--accent); font-weight: 300; text-align: center; white-space: nowrap; }
+  .thesis-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2.5px; font-weight: 700; text-transform: uppercase; margin-bottom: 12px; display: block; color: var(--muted); }
+  .thesis-side--to .thesis-label { color: var(--accent); }
+  .thesis-body { font-size: clamp(16px,1.8vw,20px); font-weight: 700; color: var(--ink); line-height: 1.3; font-family: var(--font-head); text-transform: uppercase; letter-spacing: -.01em; }
+
+  /* ── Stage header ── */
+  .stage-label {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--muted); margin-bottom: clamp(16px,2.5vh,28px);
+  }
+  .stage-label .stage-num {
+    background: var(--accent-soft); color: var(--accent);
+    border: 1px solid var(--accent-line);
+    padding: 5px 14px; border-radius: 4px;
+    font-weight: 700; font-size: 13px; letter-spacing: .04em;
+  }
+
+  /* ── Pain table ── */
+  .pain-table { width: 100%; border-collapse: collapse; margin-top: clamp(20px,3vh,32px); }
+  .pain-table th { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-weight: 500; padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--line); }
+  .pain-table td { padding: 10px 16px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--body); vertical-align: top; line-height: 1.55; }
+  .pain-table tr:last-child td { border-bottom: none; }
+  .pain-table td:first-child { color: var(--ink); font-weight: 600; font-size: 13px; }
+  .pain-impact { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+  .pain-impact--high   { background: var(--red-soft); color: var(--red); }
+  .pain-impact--medium { background: var(--amber-soft); color: var(--amber); }
+
+  /* ── Static vs Memory example ── */
+  .knowledge-example {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(16px,2.5vw,32px);
+    margin-top: clamp(24px,3.5vh,40px);
+  }
+  .ke-block { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .ke-block--memory { border-color: var(--accent-line); }
+  .ke-head { padding: 12px 20px; background: var(--paper); border-bottom: 1px solid var(--line); }
+  .ke-block--memory .ke-head { background: var(--accent-soft); border-bottom-color: var(--accent-line); }
+  .ke-head-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+  .ke-block--memory .ke-head-label { color: var(--accent); }
+  .ke-body { padding: clamp(16px,2.2vw,24px); display: flex; flex-direction: column; gap: 10px; }
+  .ke-fact { background: var(--bg); border: 1px solid var(--line); border-radius: 3px; padding: 12px 16px; font-size: var(--text-sm); }
+  .ke-fact--conflict { border-color: rgba(248,113,113,.3); }
+  .ke-fact--resolved { border-color: var(--accent-line); background: var(--accent-soft); }
+  .ke-fact-year { font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: 1.5px; margin-bottom: 4px; display: block; }
+  .ke-fact-text { color: var(--body); line-height: 1.5; }
+  .ke-fact-text strong { color: var(--ink); }
+  .ke-note { font-size: var(--text-xs); color: var(--red); margin-top: 8px; font-family: var(--font-mono); letter-spacing: 1px; }
+  .ke-block--memory .ke-note { color: var(--accent); }
+
+  /* ── Architecture model ── */
+  .arch-model {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(14px,2vw,24px);
+    margin-top: clamp(24px,3.5vh,40px);
+  }
+  .arch-tier { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .arch-tier--central { border-color: var(--accent-line); }
+  .arch-tier-head { padding: 16px 20px; background: var(--paper); border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 12px; }
+  .arch-tier--central .arch-tier-head { background: var(--accent-soft); border-bottom-color: var(--accent-line); }
+  .arch-tier-icon { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .arch-tier--central .arch-tier-icon { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .arch-tier-name { font-family: var(--font-head); font-size: 18px; font-weight: 500; text-transform: uppercase; letter-spacing: -.01em; color: var(--ink); }
+  .arch-tier-body { padding: clamp(16px,2.2vw,24px); }
+  .arch-tier-body p { font-size: var(--text-sm); color: var(--body); margin: 0 0 10px; }
+  .arch-tier-body p:last-child { margin-bottom: 0; }
+  .arch-examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+
+  /* ── User journey (bridge) ── */
+  .bridge { display: flex; align-items: center; justify-content: center; gap: 0; margin-top: clamp(24px,3.5vh,40px); }
+  .bridge-node { text-align: center; padding: clamp(16px,2.2vw,24px) clamp(20px,3vw,36px); background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); min-width: 140px; }
+  .bridge-node--active { border-color: var(--accent-line); background: var(--accent-soft); }
+  .bridge-node-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; display: block; }
+  .bridge-node--active .bridge-node-label { color: var(--accent); }
+  .bridge-node-title { font-family: var(--font-head); font-size: 17px; font-weight: 500; text-transform: uppercase; color: var(--ink); }
+  .bridge-arrow { font-size: 24px; color: var(--faint); padding: 0 8px; flex-shrink: 0; }
+
+  /* ── Source eval matrix ── */
+  .source-matrix { width: 100%; border-collapse: collapse; margin-top: clamp(20px,3vh,32px); }
+  .source-matrix th { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-weight: 500; padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--line); }
+  .source-matrix td { padding: 14px 16px; border-bottom: 1px solid var(--line); font-size: var(--text-sm); vertical-align: middle; }
+  .source-matrix tr:last-child td { border-bottom: none; }
+  .source-matrix tr.chosen { background: var(--accent-soft); }
+  .source-matrix tr.chosen td { border-bottom-color: var(--accent-line); }
+  .source-matrix tr.chosen td:first-child { color: var(--accent); font-weight: 700; }
+  .sm-name { font-weight: 600; color: var(--ink); }
+  .sm-score { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+  .sm-score--high   { background: var(--green); }
+  .sm-score--medium { background: var(--amber); }
+  .sm-score--low    { background: var(--red); }
+  .sm-score-wrap    { display: flex; align-items: center; gap: 7px; }
+  .sm-chosen-badge  { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; background: var(--accent); color: var(--on-accent); padding: 3px 8px; border-radius: 3px; }
+
+  /* ── Decision card ── */
+  .decision-card { border: 1.5px solid var(--accent-line); border-left: 4px solid var(--accent); background: var(--accent-soft); border-radius: var(--radius); padding: clamp(24px,3vw,40px); }
+  .decision-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 18px; display: block; }
+  .decision-headline { font-family: var(--font-head); font-size: clamp(22px,2.6vw,34px); font-weight: 500; text-transform: uppercase; color: var(--ink); line-height: 1.1; margin-bottom: 20px; letter-spacing: -.01em; }
+  .decision-rationale { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(12px,2vw,20px); margin-top: 20px; }
+  .dr-item { border-top: 1px solid var(--accent-line); padding-top: 14px; }
+  .dr-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; display: block; }
+  .dr-text { font-size: var(--text-sm); color: var(--body); line-height: 1.6; }
+
+  /* ── Workflow steps ── */
+  .workflow { display: grid; grid-template-columns: repeat(6,1fr); gap: 0; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin-top: clamp(24px,3.5vh,40px); }
+  .wf-step { padding: clamp(14px,2vw,24px) clamp(12px,1.5vw,18px); border-right: 1px solid var(--line); position: relative; }
+  .wf-step:last-child { border-right: none; }
+  .wf-step--active { background: var(--accent-soft); }
+  .wf-num { font-family: var(--font-mono); font-size: 11px; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 10px; display: block; }
+  .wf-step--active .wf-num { color: var(--accent); }
+  .wf-title { font-family: var(--font-head); font-size: clamp(12px,1.3vw,16px); font-weight: 500; text-transform: uppercase; color: var(--ink); line-height: 1.2; margin-bottom: 8px; }
+  .wf-note { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  /* ── Entry points ── */
+  .entry-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: clamp(10px,1.5vw,18px); margin-top: clamp(24px,3.5vh,40px); }
+  .entry-card { border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(16px,2.2vw,24px); background: var(--paper); }
+  .entry-icon { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 16px; margin-bottom: 14px; }
+  .entry-name { font-family: var(--font-head); font-size: 16px; font-weight: 500; text-transform: uppercase; color: var(--ink); margin-bottom: 8px; }
+  .entry-note { font-size: 12px; color: var(--muted); line-height: 1.55; }
+
+  /* ── Impact ── */
+  .impact-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: clamp(14px,2vw,24px); margin-top: clamp(28px,4vh,44px); }
+  .impact-card { border-radius: var(--radius); padding: clamp(22px,2.8vw,32px); }
+  .impact-card--qual   { background: var(--paper); border: 1px solid var(--line); }
+  .impact-card--quant  { background: var(--accent-soft); border: 1px solid var(--accent-line); }
+  .impact-card--strat  { background: var(--paper); border: 1px solid var(--line); }
+  .impact-type { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; display: block; }
+  .impact-card--quant .impact-type { color: var(--accent); }
+  .impact-metric { font-family: var(--font-head); font-size: clamp(28px,3.8vw,52px); font-weight: 500; color: var(--ink); line-height: .95; margin-bottom: 14px; }
+  .impact-card--quant .impact-metric { color: var(--accent); }
+  .impact-desc { font-size: var(--text-sm); color: var(--body); line-height: 1.6; }
+
+  /* ── Learnings ── */
+  .learnings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(16px,2.5vw,32px); margin-top: clamp(28px,4vh,44px); }
+  .learning { border-top: 2px solid var(--faint); padding-top: 20px; }
+  .learning--accent { border-top-color: var(--accent); }
+  .learning-num { font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px; color: var(--muted); margin-bottom: 12px; display: block; }
+  .learning--accent .learning-num { color: var(--accent); }
+  .learning-title { font-family: var(--font-head); font-size: clamp(18px,2vw,26px); font-weight: 500; text-transform: uppercase; color: var(--ink); line-height: 1.1; margin-bottom: 12px; }
+
+  /* ── Next band ── */
+  .next-band { padding: clamp(56px,9vh,104px) 0; background: var(--paper); border-top: 1px solid var(--line); }
+  .next-inner { max-width: var(--max-w); margin: 0 auto; padding: 0 var(--pad-x); display: grid; grid-template-columns: 1fr 1fr; gap: var(--col-gap); align-items: center; }
+  .next-tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; display: block; }
+  .next-title { font-family: var(--font-head); font-size: clamp(28px,3.6vw,48px); font-weight: 500; text-transform: uppercase; color: var(--ink); line-height: 1.05; }
+  .next-title em { color: var(--accent); font-style: normal; }
+  .next-cta { display: inline-flex; align-items: center; gap: 10px; margin-top: 28px; font-size: var(--text-xs); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); border-bottom: 1px solid var(--accent-line); padding-bottom: 2px; }
+
+  @media(max-width:860px){
+    .thesis-contrast { grid-template-columns:1fr; }
+    .thesis-arrow { transform:rotate(90deg); }
+    .knowledge-example,.arch-model,.decision-rationale { grid-template-columns:1fr; }
+    .workflow { grid-template-columns:1fr 1fr 1fr; }
+    .wf-step:nth-child(3) { border-right:none; }
+    .wf-step:nth-child(4) { border-top:1px solid var(--line); }
+    .entry-grid { grid-template-columns:1fr 1fr; }
+    .impact-grid,.learnings-grid { grid-template-columns:1fr; }
+    .next-inner { grid-template-columns:1fr; }
+  }
+  @media(max-width:620px){
+    .workflow { grid-template-columns:1fr 1fr; }
+    .entry-grid { grid-template-columns:1fr 1fr; }
+    .bridge { flex-direction:column; }
+    .bridge-arrow { transform:rotate(90deg); padding:4px 0; }
+  }
+
+  /* Mobile: wrap workflow flex row */
+  @media(max-width:760px){
+    [style*="display:flex"][style*="align-items:flex-start"][style*="gap:0"] {
+      flex-wrap: wrap;
+    }
+    [style*="display:flex"][style*="align-items:flex-start"][style*="gap:0"] > [style*="flex:1"] {
+      flex: 1 1 140px;
+    }
+    [style*="display:flex"][style*="align-items:flex-start"][style*="gap:0"] > [style*="flex-shrink:0"] {
+      display: none;
+    }
+  }
+
+  /* Mobile: stack all inline two-column grids */
+  @media(max-width:760px){
+    [style*="grid-template-columns:1fr 1fr"],
+    [style*="grid-template-columns: 1fr 1fr"] {
+      grid-template-columns: 1fr !important;
+    }
+    [style*="grid-template-columns:repeat(2,1fr)"],
+    [style*="grid-template-columns: repeat(2, 1fr)"] {
+      grid-template-columns: 1fr !important;
+    }
+    /* Workflow steps wrap on mobile */
+    .workflow { grid-template-columns: 1fr 1fr !important; }
+  }
+
+  /* ── Compact slide type system ─────────────────────────────────────
+     One size per role. All h2s, leads, and labels use the same scale.
+  ──────────────────────────────────────────────────────────────────── */
+
+  /* H2 — uniform across ALL sections */
+  .section h2, .section--alt h2 {
+    font-size: 15px !important;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    line-height: 1.3;
+    max-width: none;
+    margin: 0 0 10px;
+  }
+
+  /* Section-intro h2 inside .s-head — bigger, sentence case, below the chip */
+  .s-head__top { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; }
+  .s-head h2 {
+    font-size: clamp(22px,2.8vw,32px) !important;
+    font-weight: 700;
+    letter-spacing: -.01em !important;
+    text-transform: none !important;
+    line-height: 1.15 !important;
+    margin: 0 !important;
+  }
+
+  /* Lead paragraphs */
+  .section p.lead, .section--alt p.lead {
+    font-family: var(--font) !important;
+    font-size: .875rem !important;
+    line-height: 1.65;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  .section p.lead strong, .section--alt p.lead strong { color: var(--ink); }
+
+  /* r2-list — row titles match h2 level */
+  .r2-list__title { font-size: 14px !important; letter-spacing: .02em; }
+  .r2-list__desc  { font-size: 12px !important; line-height: 1.65; }
+
+  /* r2-key reflection headings (inline-styled <p> used as heading) */
+  .r2-key p:first-of-type { font-size: 14px !important; }
+
+  /* ms-grid — strip card chrome, top-rule only */
+  .ms-grid {
+    background: transparent;
+    border: none;
+    gap: clamp(20px,3vw,40px);
+  }
+  .ms-cell {
+    background: transparent !important;
+    padding: 0;
+    border: none;
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+  }
+  /* Preserve outlined comparison cells (Stage 4 A/B) */
+  .ms-cell[style*="outline"] {
+    padding: clamp(18px,2.2vw,28px);
+    border-top: none;
+  }
+
+  /* ms-cell anatomy */
+  .ms-num   { display: none; }
+  .ms-title { font-size: 11px !important; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin: 0 0 8px; }
+  .ms-body  { font-size: 13px !important; line-height: 1.6; }
+
+  /* Card body text */
+  .card p { font-size: 13px !important; line-height: 1.65; }
+
+  /* Subtle green tags — less prominent than accent headers */
+  .tag-green {
+    background: rgba(52,211,153,.07) !important;
+    color: rgba(52,211,153,.55) !important;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to content</a>
+
+<nav class="site-nav" role="navigation" aria-label="Main">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">Umesh Indoriya</a>
+    <div class="nav-links">
+      <a href="../index.html#work">Work</a>
+      <a href="../index.html#contact">Contact</a>
+    </div>
+    <a href="https://drive.google.com/file/d/1-habwW3CK3mAw6Fsq4u0IPKiehWsFm0N/view?usp=sharing" target="_blank" rel="noopener" style="font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); border:1px solid rgba(255,255,255,0.18); border-radius:100px; padding:8px 18px; text-decoration:none; white-space:nowrap; transition:background .2s, color .2s, border-color .2s;" onmouseover="this.style.borderColor='var(--ink)'; this.style.color='var(--ink)';" onmouseout="this.style.borderColor='rgba(255,255,255,0.18)'; this.style.color='var(--muted)';">Resume ↗</a>
+    <button class="nav-hamburger" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<main id="main">
+
+<!-- ══════════════════ HERO ══════════════════ -->
+<header class="cs-hero container">
+  <div class="cs-hero__label fade-up">
+    <span class="label">ThoughtSpot &middot; AI Analytics &middot; 2026</span>
+    <span class="cs-hero__rule" aria-hidden="true"></span>
+  </div>
+  <h1 class="fade-up" style="text-transform:none; font-size:clamp(34px,6.4vw,87px);">Building <span style="color:var(--accent);">Memory</span><br><em style="color:#fff;">for Enterprise AI</em></h1>
+  <p class="cs-hero-sub fade-up" style="font-family:var(--font); max-width:44ch;">Defining how analysts create, manage, and scale business knowledge for Spotter (AI agent)</p>
+  <div class="cs-meta fade-up">
+    <div class="cs-meta-item"><div class="meta-label">Role</div><div class="meta-val">Senior Product Designer</div></div>
+    <div class="cs-meta-item"><div class="meta-label">Timeline</div><div class="meta-val">12 Weeks</div></div>
+    <div class="cs-meta-item"><div class="meta-label">Scope</div><div class="meta-val">Concept Definition &middot; IA &middot; End-to-End UX</div></div>
+    <div class="cs-meta-item"><div class="meta-label">Team</div><div class="meta-val">PM &middot; Engg.</div></div>
+  </div>
+
+  <!-- Project context card -->
+  <div class="card fade-up" style="margin-top:clamp(24px,3.5vh,40px); padding:clamp(18px,2.4vw,28px); border-left:3px solid var(--accent); border-radius:0;">
+    <span class="card-label" style="margin-bottom:8px; display:block;">Project context</span>
+    <p style="font-size:13px; color:#fff; line-height:1.7; margin:0 0 10px;">Analysts are responsible for enabling Spotter (AI agent) for hundreds of business users, including leadership teams that rely on accurate answers for decision-making. To make Spotter effective, analysts must teach it business context.</p>
+    <p style="font-size:13px; color:#fff; line-height:1.7; margin:0 0 10px;">However, this context was fragmented across multiple surfaces, required ongoing manual maintenance, and was difficult to scale.</p>
+    <p style="font-size:13px; color:#fff; line-height:1.7; margin:0;">Memory introduced a new approach for capturing, organising, and scaling business knowledge &#8212; helping analysts provide richer context to Spotter with less manual effort.</p>
+
+    <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--line);">
+      <span class="card-label" style="margin-bottom:12px; display:block;">Project deliverables</span>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:clamp(12px,2vw,24px);">
+        <div>
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 4px;">Platform Foundation</p>
+          <p style="font-size:12px; color:var(--muted); line-height:1.6; margin:0;">Established Memory as a scalable knowledge layer within ThoughtSpot.</p>
+        </div>
+        <div>
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 4px;">Phase 1 Experience</p>
+          <p style="font-size:12px; color:var(--muted); line-height:1.6; margin:0;">Designed the end-to-end workflow for generating Memory from Liveboards.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+
+<!-- ══════════════════ PRODUCT CONTEXT ══════════════════ -->
+<section class="section">
+  <div class="container">
+
+    <!-- Section chip -->
+    <div class="s-head__top fade-up" style="margin-bottom:clamp(20px,3vh,32px);">
+      <span class="s-num">Context</span>
+    </div>
+
+    <!-- 1. What is Spotter -->
+    <div class="fade-up" style="padding-bottom:clamp(20px,3vh,32px); border-bottom:1px solid var(--line); display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,4vw,56px); align-items:start;">
+      <div>
+        <h2>What is Spotter?</h2>
+        <p style="font-size:.875rem; line-height:1.65; color:var(--muted); margin:0;">Spotter is a <strong style="color:#fff;">conversational AI agent</strong> that answers business questions in natural language and delivers insights from your data.</p>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:clamp(16px,3vw,32px);">
+        <div>
+          <p style="font-size:.7rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin:0 0 6px;">Who uses it</p>
+          <p style="font-size:.8rem; line-height:1.6; color:var(--muted); margin:0;">Business users, managers, and leadership who ask questions in natural language and act on the answers.</p>
+        </div>
+        <div>
+          <p style="font-size:.7rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin:0 0 6px;">Who enables it</p>
+          <p style="font-size:.8rem; line-height:1.6; color:var(--muted); margin:0;">Analysts configure and manage Spotter, ensuring it provides accurate, reliable answers across the organisation&#8217;s data models.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Why AI needs context -->
+    <div class="fade-up" style="padding:clamp(20px,3vh,32px) 0; border-bottom:1px solid var(--line); display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,4vw,56px); align-items:start;">
+      <div>
+        <h2>Why Spotter needs context</h2>
+        <p class="lead" style="margin-top:12px;">Business context helps Spotter understand the data better and answer accurately. Analysts have to continuously add and manage context through instructions, reference questions, business terms, and more.</p>
+      </div>
+      <div style="border-radius:var(--radius); overflow:hidden;">
+        <img src="../images/context spotter.png" alt="Why Spotter needs context" style="width:100%; display:block;">
+      </div>
+    </div>
+
+    <!-- 3. Analyst pain points -->
+    <div class="fade-up" style="padding:clamp(20px,3vh,32px) 0; border-bottom:1px solid var(--line);">
+      <!-- Header row: text left, image right -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,4vw,56px); align-items:center; margin-bottom:clamp(16px,2.5vh,24px);">
+        <div>
+          <h2>Analyst pain points</h2>
+          <p class="lead" style="margin-top:12px;">Today, analysts spend time creating and maintaining business context across multiple surfaces. As knowledge changes, keeping that context accurate becomes increasingly difficult.</p>
+        </div>
+        <div style="border-radius:var(--radius); overflow:hidden;">
+          <img src="../images/Sad analyst.png" alt="Analyst struggling with fragmented context" style="width:100%; display:block;">
+        </div>
+      </div>
+      <!-- Table spans full width below -->
+      <table class="pain-table">
+        <thead>
+          <tr>
+            <th>Challenge</th>
+            <th>What this means in practice</th>
+            <th>Impact</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Repetitive manual setup</td>
+            <td>Instructions, Q&amp;A mappings, business terms &#8212; written once, never updated. Duplicated across every data model.</td>
+            <td><span class="pain-impact pain-impact--high">High effort</span></td>
+          </tr>
+          <tr>
+            <td>Context spread across multiple surfaces</td>
+            <td>Four separate places to add context. No single view. If Spotter answers wrong, the analyst checks everything to find the gap.</td>
+            <td><span class="pain-impact pain-impact--high">Hard to manage</span></td>
+          </tr>
+          <tr>
+            <td>Static instructions become outdated</td>
+            <td>Business changes. Instructions don&#8217;t. Stale context actively misleads Spotter.</td>
+            <td><span class="pain-impact pain-impact--high">Knowledge decay</span></td>
+          </tr>
+          <tr>
+            <td>Conflicting context accumulates</td>
+            <td>Old and new instructions coexist. The system doesn&#8217;t resolve them. Reliability drops.</td>
+            <td><span class="pain-impact pain-impact--high">Reduced AI trust</span></td>
+          </tr>
+          <tr>
+            <td>Heavy setup before enabling Spotter</td>
+            <td>Analysts face a blank slate. No starting point. Many delay or never enable Spotter on new data models.</td>
+            <td><span class="pain-impact pain-impact--high">Cold-start problem</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 4. Opportunity -->
+    <div class="fade-up" style="padding-top:clamp(20px,3vh,32px);">
+      <h2 style="font-size:clamp(18px,2.2vw,26px) !important; color:var(--accent); letter-spacing:.06em; text-transform:uppercase; font-weight:700; margin:0 0 14px;">Opportunity</h2>
+
+      <!-- Left: paragraphs | Right: potential benefits -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,4vw,56px); align-items:start; margin-bottom:20px;">
+        <div>
+          <p style="font-size:13px; line-height:1.7; color:#fff; margin:0 0 8px;">&#8594; Memory presents an opportunity to shift analysts away from maintaining instructions and toward <strong>teaching business knowledge.</strong></p>
+          <p style="font-size:13px; line-height:1.7; color:#fff; margin:0;">&#8594; Instead of manually updating rules and mappings, analysts can provide context directly, while AI organises, relates, updates, and maintains that knowledge over time.</p>
+        </div>
+        <div>
+          <p style="font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin:0 0 8px;">Potential benefits</p>
+          <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:5px;">
+            <li style="font-size:13px; color:var(--muted); padding-left:12px; border-left:2px solid var(--accent-line);">Less repetitive manual work</li>
+            <li style="font-size:13px; color:var(--muted); padding-left:12px; border-left:2px solid var(--accent-line);">Easier updates when business knowledge changes</li>
+            <li style="font-size:13px; color:var(--muted); padding-left:12px; border-left:2px solid var(--accent-line);">Reduced conflicts between old and new context</li>
+            <li style="font-size:13px; color:var(--muted); padding-left:12px; border-left:2px solid var(--accent-line);">A single knowledge layer instead of fragmented surfaces</li>
+            <li style="font-size:13px; color:var(--muted); padding-left:12px; border-left:2px solid var(--accent-line);">Faster Spotter setup and adoption</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Happy analyst image -->
+      <div style="border-radius:var(--radius); overflow:hidden; margin-bottom:20px; display:flex; justify-content:center;">
+        <img src="../images/happy analsyt.png" alt="Analyst with Memory — less manual effort" style="width:60%; display:block;">
+      </div>
+
+      <!-- Example cards — stacked below -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <div style="border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; background:var(--paper);">
+          <p style="font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:0 0 8px;">Static context &#8212; both facts coexist</p>
+          <p style="font-size:13px; color:var(--body); margin:0 0 4px;">Fact A &#8212; &#8220;Lives in <strong style="color:var(--ink);">Delhi</strong>&#8221;</p>
+          <p style="font-size:13px; color:var(--body); margin:0 0 8px;">Fact B &#8212; &#8220;Lives in <strong style="color:var(--ink);">Bangalore</strong>&#8221;</p>
+          <p style="font-size:12px; color:var(--muted); margin:0;">&#9888; Which one is true? The system doesn&#8217;t know.</p>
+        </div>
+        <div style="border:1px solid var(--accent-line); border-radius:var(--radius); padding:14px 16px; background:var(--accent-soft);">
+          <p style="font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin:0 0 8px;">Memory &#8212; knowledge evolves</p>
+          <p style="font-size:13px; color:var(--body); margin:0 0 8px;">Resolved &#8212; &#8220;Previously lived in <strong style="color:var(--ink);">Delhi</strong>. Currently lives in <strong style="color:var(--ink);">Bangalore</strong>.&#8221;</p>
+          <p style="font-size:12px; color:var(--accent); margin:0;">&#10003; Knowledge evolves.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ THE JOURNEY ══════════════════ -->
+<section class="section section--alt">
+  <div class="container">
+    <div class="s-head fade-up">
+      <div class="s-head__top">
+        <span class="s-num">The Journey</span>
+        <h2>Project Journey</h2>
+      </div>
+      <p class="lead">Memory began as a simple idea: improve Spotter&#8217;s responses. What followed was a series of fundamental questions around definition, ownership, architecture, and adoption. Each stage below represents a key decision that shaped Memory into a scalable product capability.</p>
+    </div>
+
+    <div class="r2-list r2-list--compact fade-up">
+
+      <div class="r2-list__row">
+        <span class="r2-list__num">01</span>
+        <div>
+          <div class="r2-list__title">Define Memory</div>
+          <p class="r2-list__desc" style="font-weight:600; color:var(--ink-2); margin-bottom:10px;">What should qualify as Memory?</p>
+          <p class="r2-list__desc">We started with a broad landscape of concepts: short-term memory, long-term memory, instructions, knowledge sources, business rules, and conversational context.</p>
+          <p class="r2-list__desc" style="margin-top:10px;">Rather than adopting existing AI definitions, we narrowed the concept to fit the needs of ThoughtSpot analysts and enterprise data.</p>
+        </div>
+        <div>
+          <p style="font-family:var(--font-mono); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:8px;">Outcome</p>
+          <p class="r2-list__desc" style="font-weight:600; color:var(--ink-2); margin-bottom:10px;">A practical definition of Memory for ThoughtSpot</p>
+          <div style="border-left:2px solid var(--accent); padding-left:14px; margin-bottom:10px;">
+            <p class="r2-list__desc" style="font-style:italic;">Context created by AI, managed by AI, and used by AI.</p>
+          </div>
+          <p class="r2-list__desc">Analysts can contribute knowledge and suggest associations, but the organisation, relationships, and retrieval of memory remain AI-managed.</p>
+        </div>
+      </div>
+
+      <div class="r2-list__row">
+        <span class="r2-list__num">02</span>
+        <div>
+          <div class="r2-list__title">Define Memory Architecture</div>
+          <p class="r2-list__desc">How should memory be structured? Explored multiple IA models, ownership hierarchy exploration, Central vs Personal Memory, tagging vs hierarchy decision.</p>
+        </div>
+        <div>
+          <p style="font-family:var(--font-mono); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:8px;">Outcome</p>
+          <p class="r2-list__desc">Simple, scalable two-tier architecture that survives future agents.</p>
+        </div>
+      </div>
+
+      <div class="r2-list__row">
+        <span class="r2-list__num">03</span>
+        <div>
+          <div class="r2-list__title">Place Memory in ThoughtSpot</div>
+          <p class="r2-list__desc">Where should memory live? Evaluated Data Workspace vs Spotter vs a shared surface. Memory needed to support multiple agents, not be owned by any one of them.</p>
+        </div>
+        <div>
+          <p style="font-family:var(--font-mono); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:8px;">Outcome</p>
+          <p class="r2-list__desc">Dedicated Spotter Memory section in Data Workspace &#8212; one home for all memory.</p>
+        </div>
+      </div>
+
+      <div class="r2-list__row">
+        <span class="r2-list__num">04</span>
+        <div>
+          <div class="r2-list__title">Define V1 Scope</div>
+          <p class="r2-list__desc">What should we build first? Compared existing trusted sources (Liveboards, Reference Questions, Business Terms) against conversational learning. Evaluated on trust, risk, quality, feasibility.</p>
+        </div>
+        <div>
+          <p style="font-family:var(--font-mono); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:8px;">Outcome</p>
+          <p class="r2-list__desc">Liveboards as the low-risk, high-trust starting point. Conversational learning scoped to V2.</p>
+        </div>
+      </div>
+
+      <div class="r2-list__row">
+        <span class="r2-list__num">05</span>
+        <div>
+          <span class="tag tag-green" style="margin-bottom:10px; display:inline-block;">Design solution</span>
+          <div class="r2-list__title">V1: How to create Memory from Liveboards</div>
+          <p class="r2-list__desc">How do analysts create memory? Source selection, scope definition, memory generation, trust and validation.</p>
+        </div>
+        <div>
+          <p style="font-family:var(--font-mono); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:8px;">Outcome</p>
+          <p class="r2-list__desc">End-to-end guided creation workflow: select &#8594; scope &#8594; context &#8594; generate &#8594; review &#8594; open Spotter.</p>
+        </div>
+      </div>
+
+      <div class="r2-list__row">
+        <span class="r2-list__num">06</span>
+        <div>
+          <div class="r2-list__title">Connect Memory to the Ecosystem</div>
+          <p class="r2-list__desc">How does memory fit into the broader product? Memory creation, Spotter enablement, testing in Spotter, and entry points across Data Model, Liveboards, and Spotter chat.</p>
+        </div>
+        <div>
+          <p style="font-family:var(--font-mono); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:8px;">Outcome</p>
+          <p class="r2-list__desc">Memory becomes part of the analyst journey &#8212; not a standalone feature.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ STAGE 1: DEFINING MEMORY ══════════════════ -->
+<section class="section">
+  <div class="container">
+
+    <!-- 1. Title + subcopy -->
+    <div class="fade-up">
+      <div class="stage-label"><span class="stage-num">Stage 1: Defining Memory</span></div>
+      <div class="s-head">
+        <div class="s-head__top">
+          <h2>Before designing anything, we had to define what Memory is</h2>
+        </div>
+        <p class="lead">The biggest risk wasn&#8217;t building the wrong flow. It was building the wrong mental model. We started with questions, not wireframes.</p>
+      </div>
+    </div>
+
+    <!-- 2. The questions -->
+    <div class="fade-up" style="margin-top:clamp(32px,5vh,56px);">
+      <p style="font-family:var(--font-mono); font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:var(--muted); margin-bottom:4px;">Questions we had to answer first</p>
+      <div class="ctx-row">
+        <span class="ctx-row__label">01 &mdash; What qualifies?</span>
+        <div class="ctx-row__content"><p>Not everything an analyst knows belongs in Memory. We needed to separate durable business knowledge from transient context and task-specific instructions.</p></div>
+      </div>
+      <div class="ctx-row">
+        <span class="ctx-row__label">02 &mdash; Who owns it?</span>
+        <div class="ctx-row__content"><p>Is it personal to a user? Scoped to a data model? Shared across the organisation? Ownership determines trust, governance, and how Memory scales.</p></div>
+      </div>
+      <div class="ctx-row" style="border-bottom:1px solid var(--line);">
+        <span class="ctx-row__label">03 &mdash; How does it scale?</span>
+        <div class="ctx-row__content"><p>ThoughtSpot serves enterprises with hundreds of analysts and thousands of data models. The architecture had to work at that scale from day one.</p></div>
+      </div>
+    </div>
+
+    <!-- 3. The process -->
+    <div class="fade-up" style="margin-top:clamp(40px,6vh,72px);">
+      <p style="font-family:var(--font-mono); font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:var(--muted); margin-bottom:16px;">How we found the answers</p>
+
+      <!-- Cards 1 + 2 -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:clamp(12px,2vw,20px);">
+        <div class="card">
+          <span class="card-label">Competitive analysis</span>
+          <p>Consumer AI (ChatGPT, Claude, Gemini, Copilot) and enterprise AI (Tableau, Cursor, OpenAI Enterprise, Intercom Fin). Surfaced 5 memory types and multiple ownership levels no single product had fully solved.</p>
+        </div>
+        <div class="card">
+          <span class="card-label">Internal sessions with PM and champions</span>
+          <p>Cross-functional sessions with Product, Engineering, and internal Spotter champions to surface existing mental models &#8212; often conflicting &#8212; and align on a shared definition before any architecture was proposed.</p>
+        </div>
+      </div>
+
+      <!-- Step 3 — slide note -->
+      <p style="font-size:13px; color:var(--muted); line-height:1.6; margin-top:clamp(14px,2vh,20px); padding-left:4px; border-left:2px solid var(--line-2); padding-left:14px;">
+        With a shared definition in place, we had the foundation to explore what Memory architecture should look like inside ThoughtSpot &#8212; not as an adaptation of any existing product, but designed specifically for an analyst managing AI accuracy across an organisation&#8217;s data.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════ STAGE 2: ARCHITECTURE ══════════════════ -->
+<section class="section section--alt">
+  <div class="container">
+
+    <!-- 1. Header + intro -->
+    <div class="fade-up">
+      <div class="stage-label"><span class="stage-num">Stage 2: Memory Architecture</span></div>
+      <div class="s-head">
+        <div class="s-head__top">
+          <h2>We explored multiple IA models and intentionally chose the simplest one</h2>
+        </div>
+        <p class="lead">The natural instinct was to create a memory type for every use case. That instinct was wrong. In foundational systems, complexity compounds over time &#8212; every new source, workflow, and AI capability adds weight. We chose an architecture that could scale with the product rather than capture every edge case on day one.</p>
+      </div>
+    </div>
+
+    <!-- 2. Bridge -->
+    <div class="fade-up" style="margin-top:clamp(32px,5vh,56px); border-left:3px solid var(--accent-line); padding-left:clamp(20px,2.5vw,32px);">
+      <p style="font-size:13px; color:var(--ink-2); line-height:1.65; max-width:68ch;">The core question was not where memory comes from, but <strong>who owns it</strong> and <strong>who it should affect</strong>. We explored multiple ownership models before converging on a simpler approach.</p>
+    </div>
+
+    <!-- 3. Architecture evolution -->
+    <div class="fade-up" style="margin-top:clamp(40px,6vh,72px);">
+      <p style="font-family:var(--font-mono); font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:var(--muted); margin-bottom:20px;">Architecture evolution</p>
+      <div class="journey">
+
+        <!-- Step 1: Initial iteration -->
+        <div class="j-step">
+          <div class="j-rail">
+            <div class="j-dot" style="background:var(--paper); border-color:var(--ink-line); color:var(--muted); font-family:var(--font-mono); font-size:10px;">01</div>
+          </div>
+          <div class="j-body" style="padding-bottom:clamp(32px,5vh,56px);">
+            <p style="font-size:15px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:14px;">Initial iteration</p>
+            <div class="card" style="padding:0; overflow:hidden;">
+              <div style="padding:clamp(24px,3vw,40px); display:flex; justify-content:center;">
+                <img src="../images/Mmeory ia 1.png" alt="Initial IA iteration" style="width:75%; display:block;">
+              </div>
+              <div style="padding:clamp(18px,2.4vw,28px); border-top:1px solid var(--line);">
+                <p style="font-size:14px; font-weight:700; color:var(--ink); margin-bottom:6px;">Why the first model failed</p>
+                <p style="font-size:13px; color:var(--body); line-height:1.6;">Org, Agent, Data Model, User, and Chat Session created multiple places to manage context &#8212; introducing the same fragmentation problem we were trying to solve.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Final simplified iteration -->
+        <div class="j-step">
+          <div class="j-rail">
+            <div class="j-dot" style="background:var(--accent); border-color:var(--accent); color:var(--on-accent); font-family:var(--font-mono); font-size:10px;">02</div>
+          </div>
+          <div class="j-body">
+            <p style="font-size:15px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--accent); margin-bottom:14px;">Final simplified iteration</p>
+            <div class="card" style="padding:0; overflow:hidden; border-color:var(--accent-line);">
+              <div style="padding:clamp(24px,3vw,40px); display:flex; justify-content:center;">
+                <img src="../images/final memory ia.png" alt="Final simplified IA" style="width:75%; display:block;">
+              </div>
+              <div style="padding:clamp(18px,2.4vw,28px); border-top:1px solid var(--accent-line); display:grid; grid-template-columns:1fr 1fr; gap:clamp(20px,3vw,36px);">
+                <div>
+                  <p style="font-size:14px; font-weight:700; color:var(--ink); margin-bottom:6px;">Tagging instead of hierarchy</p>
+                  <p style="font-size:13px; color:var(--body); line-height:1.6;">We stopped using architecture layers to define scope. Memories could be targeted through tags and metadata &#8212; allowing one system to support many use cases without additional memory types.</p>
+                </div>
+                <div>
+                  <p style="font-size:14px; font-weight:700; color:var(--ink); margin-bottom:6px;">Simple ownership, flexible scope</p>
+                  <p style="font-size:13px; color:var(--body); line-height:1.6;">With only two ownership types, the model remained easy to understand while supporting future products, agents, and workflows through tagging rather than new architectural layers.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /journey -->
+    </div>
+
+    <!-- 6. Final architecture — big header + two equal cards -->
+    <div class="fade-up" style="margin-top:clamp(48px,7vh,88px);">
+      <h2 style="font-size:clamp(18px,2.2vw,26px) !important; color:var(--accent); letter-spacing:.06em; text-transform:uppercase; font-weight:700; margin:0 0 clamp(24px,3.5vh,40px);">The final architecture</h2>
+      <div style="display:grid; grid-template-columns:1fr 1fr; border:2px solid var(--accent-line); border-radius:var(--radius); overflow:hidden;">
+        <div style="padding:clamp(20px,2.5vw,28px); border-right:2px solid var(--accent-line);">
+          <p style="font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin:0 0 4px;">Central Memory</p>
+          <p style="font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:0 0 12px;">Shared &middot; Org-wide</p>
+          <p style="font-size:13px; color:var(--body); line-height:1.6; margin:0 0 8px;">Shared organisational knowledge managed by analysts. Applied across data models unless explicitly scoped otherwise.</p>
+          <p style="font-size:12px; color:var(--muted); margin:0 0 12px;">Sources: Liveboards &middot; Reference Questions &middot; Business Terms</p>
+          <div class="arch-examples">
+            <span class="tag tag-green">Revenue definitions</span>
+            <span class="tag tag-green">Reporting conventions</span>
+            <span class="tag tag-green">Business rules</span>
+          </div>
+        </div>
+        <div style="padding:clamp(20px,2.5vw,28px);">
+          <p style="font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin:0 0 4px;">Personal Memory</p>
+          <p style="font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:0 0 12px;">Individual &middot; User-scoped</p>
+          <p style="font-size:13px; color:var(--body); line-height:1.6; margin:0 0 8px;">User-specific preferences and corrections that only affect an individual&#8217;s Spotter experience.</p>
+          <p style="font-size:12px; color:var(--muted); margin:0 0 12px;">Sources: Conversation signals &middot; User corrections</p>
+          <div class="arch-examples">
+            <span class="tag tag-green">Preferred metrics</span>
+            <span class="tag tag-green">Personal shortcuts</span>
+            <span class="tag tag-green">Individual corrections</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Design principle -->
+    <div class="fade-up" style="margin-top:clamp(20px,3vh,32px); border-left:3px solid var(--accent); padding-left:clamp(14px,1.8vw,20px);">
+      <span class="card-label" style="display:block; margin-bottom:8px;">Design principle</span>
+      <p style="font-size:13px; line-height:1.65; color:var(--body); margin:0;">Every memory ultimately answers two questions: <strong style="color:var(--ink);">Who owns this knowledge?</strong> And <strong style="color:var(--ink);">who should be affected by it?</strong> By reducing the model to Central Memory and Personal Memory, analysts could understand it immediately while the platform retained flexibility through tagging and scope controls.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════ STAGE 3: WHERE MEMORY LIVES ══════════════════ -->
+<section class="section">
+  <div class="container">
+    <!-- Header + Decision left/right -->
+    <div class="fade-up" style="display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,4vw,56px); align-items:start;">
+      <div>
+        <div class="stage-label"><span class="stage-num">Stage 3: Where Memory Lives</span></div>
+        <div class="s-head">
+          <div class="s-head__top">
+            <h2>Where should Memory live?</h2>
+          </div>
+          <p class="lead">Memory wasn&#8217;t a Spotter feature. It was a foundational knowledge layer shared across current and future AI experiences.</p>
+        </div>
+      </div>
+      <div style="padding-top:clamp(8px,1.5vh,16px);">
+        <p style="font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin:0 0 10px;">Decision</p>
+        <p style="font-size:13px; line-height:1.7; color:var(--muted); margin:0 0 10px;">We introduced <strong style="color:#fff;">Spotter Memory</strong> as a dedicated section inside Data Workspace.</p>
+        <p style="font-size:13px; line-height:1.7; color:var(--muted); margin:0 0 14px;">This created a natural workflow for analysts:</p>
+        <!-- Diagram -->
+        <div style="display:flex; align-items:center; gap:6px; margin-top:12px;">
+          <div style="padding:8px 14px; background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink);">Data Model</div>
+          <span style="font-size:16px; color:var(--muted);">&rarr;</span>
+          <div style="padding:8px 14px; background:var(--accent-soft); border:1px solid var(--accent-line); border-radius:var(--radius); font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--accent);">Spotter Memory</div>
+          <span style="font-size:16px; color:var(--muted);">&harr;</span>
+          <div style="padding:8px 14px; background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink);">Spotter</div>
+        </div>
+        <p style="font-size:13px; line-height:1.7; color:var(--muted); margin:clamp(14px,2vh,20px) 0 0;">Analysts prepare and govern context alongside their data models, then validate the results directly in Spotter.</p>
+      </div>
+    </div>
+
+    <!-- Why -->
+    <div class="fade-up" style="margin-top:clamp(32px,5vh,48px); border-left:3px solid var(--accent); padding-left:clamp(14px,1.8vw,20px);">
+      <span class="card-label" style="display:block; margin-bottom:12px;">Why</span>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(16px,2.5vw,32px);">
+        <div style="border-top:1px solid var(--line-2); padding-top:14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin-bottom:6px;">Shared across agents</p>
+          <p class="ms-body">Memory needed to support future AI experiences beyond Spotter.</p>
+        </div>
+        <div style="border-top:1px solid var(--line-2); padding-top:14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin-bottom:6px;">Close to the data</p>
+          <p class="ms-body">Analysts create and govern context alongside data models.</p>
+        </div>
+        <div style="border-top:1px solid var(--line-2); padding-top:14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin-bottom:6px;">Single management surface</p>
+          <p class="ms-body">All memory sources should be managed from one place.</p>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+</section>
+
+<!-- ══════════════════ STAGE 4: MEMORY SOURCES ══════════════════ -->
+<section class="section section--alt">
+  <div class="container">
+
+    <!-- Header -->
+    <div class="fade-up">
+      <div class="stage-label"><span class="stage-num">Stage 4: Defining Project Scope for V1</span></div>
+      <div class="s-head">
+        <div class="s-head__top">
+          <h2>Where should Memory come from first?</h2>
+        </div>
+        <p class="lead">After defining Memory and its architecture, the next question was how Memory should be created. We identified two fundamentally different approaches &#8212; and they carried very different levels of risk.</p>
+      </div>
+    </div>
+
+    <!-- Comparison: two options -->
+    <div class="fade-up" style="margin-top:clamp(32px,5vh,56px); display:grid; grid-template-columns:1fr 1fr; border:2px solid var(--accent-line); border-radius:var(--radius); overflow:hidden;">
+      <!-- A — chosen -->
+      <div style="position:relative; padding:clamp(20px,2.5vw,28px); border-right:2px solid var(--accent-line); background:rgba(52,211,153,.18);">
+        <p style="font-size:13px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); margin:0 0 4px;">A — Learn from existing trusted knowledge</p>
+        <span style="position:absolute; top:0; left:0; background:var(--accent); color:var(--on-accent); width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;">&#10003;</span>
+        <ul style="list-style:none; padding:0; margin:8px 0 12px; display:flex; flex-direction:column; gap:6px;">
+          <li style="font-size:13px; color:var(--body);">Liveboards</li>
+          <li style="font-size:13px; color:var(--body);">Reference Questions</li>
+          <li style="font-size:13px; color:var(--body);">Business Terms</li>
+        </ul>
+        <p style="font-size:12px; color:var(--muted); line-height:1.55;">Already created and maintained by analysts. Structured and trusted.</p>
+      </div>
+      <!-- B — not chosen -->
+      <div style="padding:clamp(20px,2.5vw,28px);">
+        <p style="font-size:13px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#fff; margin:0 0 4px;">B — Learn directly from conversations</p>
+        <ul style="list-style:none; padding:0; margin:8px 0 12px; display:flex; flex-direction:column; gap:6px;">
+          <li style="font-size:13px; color:var(--body);">Natural language interactions with Spotter</li>
+          <li style="font-size:13px; color:var(--body);">User corrections</li>
+          <li style="font-size:13px; color:var(--body);">Business context provided during chat</li>
+        </ul>
+        <p style="font-size:12px; color:var(--muted); line-height:1.55;">Highly scalable but significantly higher risk.</p>
+      </div>
+    </div>
+
+    <!-- Decision matrix -->
+    <div class="fade-up" style="margin-top:clamp(28px,4vh,44px);">
+      <table class="source-matrix">
+        <thead>
+          <tr>
+            <th>Criteria</th>
+            <th>Existing knowledge sources</th>
+            <th>Conversations</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="sm-name">Trustworthiness</td>
+            <td><div class="sm-score-wrap"><span class="sm-score sm-score--high"></span> High</div></td>
+            <td><div class="sm-score-wrap"><span class="sm-score sm-score--medium"></span> Medium</div></td>
+          </tr>
+          <tr>
+            <td class="sm-name">Analyst verification</td>
+            <td><div class="sm-score-wrap"><span class="sm-score sm-score--high"></span> Already verified</div></td>
+            <td><div class="sm-score-wrap"><span class="sm-score sm-score--medium"></span> Verified, but prone to errors in chat</div></td>
+          </tr>
+          <tr>
+            <td class="sm-name">Risk of incorrect memory</td>
+            <td><div class="sm-score-wrap"><span class="sm-score sm-score--high"></span> Low</div></td>
+            <td><div class="sm-score-wrap"><span class="sm-score sm-score--low"></span> High</div></td>
+          </tr>
+          <tr>
+            <td class="sm-name">Implementation complexity</td>
+            <td><div class="sm-score-wrap"><span class="sm-score sm-score--medium"></span> Medium</div></td>
+            <td><div class="sm-score-wrap"><span class="sm-score sm-score--low"></span> High</div></td>
+          </tr>
+          <tr>
+            <td class="sm-name">User effort</td>
+            <td><div class="sm-score-wrap"><span class="sm-score sm-score--medium"></span> Medium</div></td>
+            <td><div class="sm-score-wrap"><span class="sm-score sm-score--high"></span> Low</div></td>
+          </tr>
+          <tr>
+            <td class="sm-name">Long-term potential</td>
+            <td><div class="sm-score-wrap"><span class="sm-score sm-score--medium"></span> Medium</div></td>
+            <td><div class="sm-score-wrap"><span class="sm-score sm-score--high"></span> Very high</div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Key insight -->
+    <div class="fade-up" style="margin-top:clamp(28px,4vh,44px); border-left:3px solid var(--accent); padding-left:clamp(14px,1.8vw,20px);">
+      <span class="card-label" style="display:block; margin-bottom:8px;">Key insight</span>
+      <p style="font-size:13px; line-height:1.65; color:var(--body); margin:0;">Conversations represented the future vision of Memory. However, they also introduced the highest risk. At this stage we were still learning what should be remembered, how memories should be structured, how users would react to AI-generated memory, and how to prevent incorrect memory creation. <strong style="color:var(--ink);">Before allowing AI to learn directly from conversations, we needed a trusted foundation.</strong></p>
+    </div>
+
+
+    <!-- Final decision banner -->
+    <div class="fade-up" style="margin-top:clamp(32px,5vh,56px);">
+      <span class="tag tag-green" style="margin-bottom:14px; display:inline-block;">V1 Decision</span>
+      <h2 style="margin-bottom:clamp(16px,2.5vh,24px);">Learning from existing trusted sources</h2>
+    </div>
+    <div class="decision-card fade-up">
+      <div style="display:flex; flex-direction:column; gap:clamp(16px,2.5vh,24px);">
+
+        <!-- 1. Liveboards — hero -->
+        <div style="padding-bottom:clamp(16px,2.5vh,24px); border-bottom:1px solid var(--accent-line);">
+          <p style="font-size:15px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink); margin-bottom:10px;">1. Liveboards</p>
+          <p style="font-size:14px; color:var(--body); line-height:1.6; max-width:60ch;">Analyst-curated dashboards containing verified business knowledge &#8212; trusted, structured, and immediately available without any new data entry.</p>
+        </div>
+
+        <!-- 2 + 3 — supporting -->
+        <div>
+          <p style="font-size:14px; font-weight:600; color:var(--ink-2); margin-bottom:4px;">2. Reference Questions</p>
+          <p style="font-size:13px; color:var(--muted); line-height:1.55; margin-bottom:14px;">The flow already exists. We will just save the output as Memory instead of static context.</p>
+          <p style="font-size:14px; font-weight:600; color:var(--ink-2); margin-bottom:4px;">3. Business Terms</p>
+          <p style="font-size:13px; color:var(--muted); line-height:1.55;">The flow already exists. We will just save the output as Memory instead of static context.</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Why Liveboards -->
+    <div class="fade-up" style="margin-top:clamp(16px,2vh,24px);">
+      <div style="padding:0;">
+        <h4 class="ms-title" style="margin-bottom:clamp(14px,2vh,20px);">Why Liveboards</h4>
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:clamp(16px,2.5vw,32px);">
+          <div style="border-top:1px solid var(--line-2); padding-top:14px;">
+            <p style="font-size:13px; font-weight:700; color:var(--ink); margin-bottom:6px;">Already curated</p>
+            <p class="ms-body">Analysts intentionally create and maintain Liveboards. Content is authored, not incidental.</p>
+          </div>
+          <div style="border-top:1px solid var(--line-2); padding-top:14px;">
+            <p style="font-size:13px; font-weight:700; color:var(--ink); margin-bottom:6px;">Rich business context</p>
+            <p class="ms-body">Liveboards contain metrics, definitions, explanations, and business narratives directly valuable for AI understanding.</p>
+          </div>
+          <div style="border-top:1px solid var(--line-2); padding-top:14px;">
+            <p style="font-size:13px; font-weight:700; color:var(--ink); margin-bottom:6px;">High trust</p>
+            <p class="ms-body">Content is already reviewed and validated before reaching business users. The organisation already trusts it.</p>
+          </div>
+          <div style="border-top:1px solid var(--line-2); padding-top:14px;">
+            <p style="font-size:13px; font-weight:700; color:var(--ink); margin-bottom:6px;">Immediate value</p>
+            <p class="ms-body">Organisations already had large Liveboard libraries that could immediately become Memory &#8212; no blank slate.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════ MEMORY CREATION WORKFLOW ══════════════════ -->
+<section class="section">
+  <div class="container">
+
+    <!-- Header -->
+    <div class="s-head fade-up">
+      <div class="s-head__top" style="flex-direction:column; align-items:flex-start; gap:10px;">
+        <div class="stage-label"><span class="stage-num">Stage 5: Design for V1</span></div>
+        <h2>Liveboard to Memory workflow</h2>
+      </div>
+      <p class="lead">After deciding to generate Memory from Liveboards, the challenge shifted to designing an end-to-end workflow that analysts could complete with confidence. The flow itself was straightforward. The complexity came from reducing friction and building trust at each step.</p>
+    </div>
+
+    <!-- Flow -->
+    <div class="fade-up" style="display:flex; align-items:flex-start; gap:0; margin-top:clamp(24px,3.5vh,40px);">
+
+      <div style="flex:1; border-top:2px solid var(--accent); padding:12px 16px 0 0;">
+        <span style="font-family:var(--font-mono); font-size:18px; letter-spacing:1px; color:var(--muted); display:block; margin-bottom:10px;">01</span>
+        <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 6px; line-height:1.3;">Select Liveboard</p>
+        <p style="font-size:11px; color:var(--muted); line-height:1.55; margin:0;">Find the right source of knowledge</p>
+      </div>
+
+      <div style="padding:6px 8px 0; color:var(--muted); font-size:12px; flex-shrink:0; margin-top:12px;">&rarr;</div>
+
+      <div style="flex:1; border-top:2px solid var(--accent); padding:12px 16px 0 0;">
+        <span style="font-family:var(--font-mono); font-size:18px; letter-spacing:1px; color:var(--muted); display:block; margin-bottom:10px;">02</span>
+        <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 6px; line-height:1.3;">Define Scope</p>
+        <p style="font-size:11px; color:var(--muted); line-height:1.55; margin:0;">Decide where the memory should apply</p>
+      </div>
+
+      <div style="padding:6px 8px 0; color:var(--muted); font-size:12px; flex-shrink:0; margin-top:12px;">&rarr;</div>
+
+      <div style="flex:1; border-top:2px solid var(--accent); padding:12px 16px 0 0;">
+        <span style="font-family:var(--font-mono); font-size:18px; letter-spacing:1px; color:var(--muted); display:block; margin-bottom:10px;">03</span>
+        <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 6px; line-height:1.3;">Add Context</p>
+        <p style="font-size:11px; color:var(--muted); line-height:1.55; margin:0;">Teach AI additional business knowledge</p>
+      </div>
+
+      <div style="padding:6px 8px 0; color:var(--muted); font-size:12px; flex-shrink:0; margin-top:12px;">&rarr;</div>
+
+      <div style="flex:1; border-top:2px solid var(--accent); padding:12px 16px 0 0;">
+        <span style="font-family:var(--font-mono); font-size:18px; letter-spacing:1px; color:var(--muted); display:block; margin-bottom:10px;">04</span>
+        <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 6px; line-height:1.3;">Generate Memory</p>
+        <p style="font-size:11px; color:var(--muted); line-height:1.55; margin:0;">Convert knowledge into memory</p>
+      </div>
+
+      <div style="padding:6px 8px 0; color:var(--muted); font-size:12px; flex-shrink:0; margin-top:12px;">&rarr;</div>
+
+      <div style="flex:1; border-top:2px solid var(--accent); padding:12px 16px 0 0;">
+        <span style="font-family:var(--font-mono); font-size:18px; letter-spacing:1px; color:var(--muted); display:block; margin-bottom:10px;">05</span>
+        <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 6px; line-height:1.3;">Review</p>
+        <p style="font-size:11px; color:var(--muted); line-height:1.55; margin:0;">Verify what AI learned</p>
+      </div>
+
+      <div style="padding:6px 8px 0; color:var(--muted); font-size:12px; flex-shrink:0; margin-top:12px;">&rarr;</div>
+
+      <div style="flex:1; border-top:2px solid var(--accent); padding:12px 0 0 0;">
+        <span style="font-family:var(--font-mono); font-size:18px; letter-spacing:1px; color:var(--muted); display:block; margin-bottom:10px;">06</span>
+        <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 6px; line-height:1.3;">Open Spotter</p>
+        <p style="font-size:11px; color:var(--muted); line-height:1.55; margin:0;">Test and build trust</p>
+      </div>
+
+    </div>
+
+    <!-- HMW grid -->
+    <div class="fade-up" style="margin-top:clamp(36px,5.5vh,64px);">
+      <p style="font-family:var(--font-mono); font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:var(--muted); margin-bottom:14px;">Key decisions</p>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(16px,2.5vw,28px);">
+        <div style="border-top:1px solid var(--line); padding-top:12px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 6px;">HMW reduce the number of steps?</p>
+          <p style="font-size:12px; color:var(--muted); line-height:1.6; margin:0;">Merged scope definition and context authoring into a single step to reduce navigation overhead and keep analysts focused on the memory they were creating.</p>
+        </div>
+        <div style="border-top:1px solid var(--line); padding-top:12px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 6px;">HMW make Liveboard selection easier?</p>
+          <p style="font-size:12px; color:var(--muted); line-height:1.6; margin:0;">Instead of a flat list, surfaced metadata and contextual signals that helped analysts quickly identify the right Liveboard.</p>
+        </div>
+        <div style="border-top:1px solid var(--line); padding-top:12px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 6px;">HMW handle long memory-generation times?</p>
+          <p style="font-size:12px; color:var(--muted); line-height:1.6; margin:0;">Generation could take 15&#8211;20 minutes. Rather than forcing users to wait, we allowed them to leave the workflow and notified them when memory creation completed.</p>
+        </div>
+        <div style="border-top:1px solid var(--line); padding-top:12px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 6px;">HMW help analysts review generated memory?</p>
+          <p style="font-size:12px; color:var(--muted); line-height:1.6; margin:0;">Raw memory output was difficult to consume. We surfaced a concise summary of key learnings instead of exposing the full generated structure.</p>
+        </div>
+        <div style="border-top:1px solid var(--line); padding-top:12px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 6px;">HMW build trust in AI-generated memory?</p>
+          <p style="font-size:12px; color:var(--muted); line-height:1.6; margin:0;">Reviewing the summary provided visibility, but trust ultimately comes from verification. The workflow encouraged analysts to validate the result through actual Spotter interactions.</p>
+        </div>
+        <div style="border-top:1px solid var(--line); padding-top:12px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 6px;">HMW connect memory creation to usage?</p>
+          <p style="font-size:12px; color:var(--muted); line-height:1.6; margin:0;">Added a direct path into Spotter so analysts could immediately test how the newly created memory affected responses.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Final Solution -->
+    <div class="fade-up" style="margin-top:clamp(40px,6vh,72px);">
+      <h2 style="font-size:clamp(18px,2.2vw,26px) !important; color:var(--accent); letter-spacing:.06em; text-transform:uppercase; font-weight:700; margin:0 0 20px;">Final Solution</h2>
+      <div style="border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; background:var(--paper);">
+        <img src="../images/final-solution.gif" alt="Final solution — Liveboard to Memory workflow"
+             style="width:100%; display:block;"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div style="display:none; align-items:center; justify-content:center; flex-direction:column; gap:8px; padding:clamp(48px,8vh,80px) 0; color:var(--muted);">
+          <span style="font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--accent);">Placeholder</span>
+          <span style="font-size:12px;">Drop <code style="font-family:var(--font-mono); font-size:11px;">images/final-solution.gif</code> to load</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════ ENTRY POINTS ══════════════════ -->
+<section class="section section--alt">
+  <div class="container">
+    <div class="s-head fade-up">
+      <div class="s-head__top" style="flex-direction:column; align-items:flex-start; gap:10px;">
+        <div class="stage-label"><span class="stage-num">Stage 6: Connecting to Ecosystem</span></div>
+        <h2>Fitting Memory in the ThoughtSpot ecosystem</h2>
+      </div>
+      <p class="lead">A Memory Sources page hidden in Data Workspace is only half the answer. Analysts who work primarily in Liveboards or Spotter chat needed to encounter Memory without navigating to find it. We created entry points across the product ecosystem.</p>
+    </div>
+
+    <div class="fade-up" style="margin-top:clamp(24px,3.5vh,40px);">
+      <img src="../images/Memory ecosystem.png" alt="Memory ecosystem — entry points across Data Model, Liveboards, Memory Page, and Spotter" style="width:100%; display:block; border-radius:var(--radius);">
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ IMPACT ══════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="s-head fade-up">
+      <div class="s-head__top">
+        <span class="s-num">Impact</span>
+        <h2>What changed after Memory shipped</h2>
+      </div>
+    </div>
+
+    <!-- Adoption -->
+    <div class="fade-up" style="margin-top:clamp(28px,4vh,44px);">
+      <p style="font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin:0 0 16px;">Adoption</p>
+      <div style="border-top:2px solid var(--accent); padding-top:14px;">
+        <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 8px;"><span style="font-size:clamp(36px,5vw,64px); font-weight:800; color:var(--accent); line-height:1; display:block; margin-bottom:8px;">2&#215;</span>increase in Memory creation among top customers</p>
+        <p style="font-size:13px; color:var(--muted); line-height:1.7; margin:0;">Within the last 15 days of May, Memory creation doubled across some of our most active customers, indicating growing adoption and continued investment in improving Spotter&#8217;s responses.</p>
+      </div>
+    </div>
+
+    <!-- Validation -->
+    <div class="fade-up" style="margin-top:clamp(28px,4vh,44px);">
+      <p style="font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin:0 0 16px;">Validation</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:clamp(16px,3vw,32px);">
+        <div style="border-top:2px solid var(--accent); padding-top:14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 8px; display:flex; align-items:center; gap:8px;"><span style="color:var(--accent);">&#10003;</span> Customers trusted Memory more than expected</p>
+          <p style="font-size:13px; color:var(--muted); line-height:1.7; margin:0;">Many customers treated Memory generated from Liveboards as highly reliable because it originated from one of their most trusted data assets. This validated our decision to start with Liveboards as the first Memory source.</p>
+        </div>
+        <div style="border-top:2px solid var(--accent); padding-top:14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 8px; display:flex; align-items:center; gap:8px;"><span style="color:var(--accent);">&#10003;</span> Conversation became the preferred management surface</p>
+          <p style="font-size:13px; color:var(--muted); line-height:1.7; margin:0;">Customers responded positively to the ability to update Memory directly from Spotter conversations, reinforcing the importance of keeping Memory close to the workflows where users already interact with AI.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key Learnings After Launch -->
+    <div class="fade-up" style="margin-top:clamp(32px,5vh,56px);">
+      <p style="font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin:0 0 16px;">Key Learnings After Launch</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:clamp(16px,3vw,32px);">
+        <div style="border-top:1px solid var(--line); padding-top:14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 8px; display:flex; align-items:center; gap:8px;"><span style="color:#f59e0b; font-size:16px; font-weight:900; line-height:1;">!</span> Visibility matters as much as generation</p>
+          <p style="font-size:13px; color:var(--muted); line-height:1.7; margin:0;">Our initial focus was helping analysts create Memory. Customer feedback showed that understanding what is currently stored is equally important for building trust and confidence in AI responses.</p>
+        </div>
+        <div style="border-top:1px solid var(--line); padding-top:14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 8px; display:flex; align-items:center; gap:8px;"><span style="color:#f59e0b; font-size:16px; font-weight:900; line-height:1;">!</span> A dedicated management page is not enough</p>
+          <p style="font-size:13px; color:var(--muted); line-height:1.7; margin:0;">Many users primarily interact with Spotter through chat and never visit Memory management surfaces. Discoverability and management need to exist within the conversational workflow itself.</p>
+        </div>
+        <div style="border-top:1px solid var(--line); padding-top:14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 8px; display:flex; align-items:center; gap:8px;"><span style="color:#f59e0b; font-size:16px; font-weight:900; line-height:1;">!</span> Conversation proved to be the strongest entry point</p>
+          <p style="font-size:13px; color:var(--muted); line-height:1.7; margin:0;">As anticipated, users found Memory through conversations more naturally than through standalone pages. Introducing conversational entry points earlier could have accelerated awareness and adoption across customers.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ LEARNINGS ══════════════════ -->
+<section class="section section--alt">
+  <div class="container">
+    <div class="s-head fade-up">
+      <div class="s-head__top" style="flex-direction:column; align-items:flex-start; gap:10px;">
+        <div class="stage-label"><span class="stage-num">Reflection</span></div>
+        <h2>My Learnings from this project</h2>
+      </div>
+    </div>
+
+    <div class="r2-keys fade-up" style="grid-template-columns:1fr 1fr;">
+      <div class="r2-key r2-key--accent">
+        <span class="r2-key__label">01</span>
+        <p style="font-size:15px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink); margin:0 0 12px; line-height:1.3;">Creating clarity before creating solutions</p>
+        <p style="font-size:13px; color:var(--body); line-height:1.7; margin:0 0 14px;">For the first few weeks, I wasn&#8217;t designing screens &#8212; I was collecting context. There were more questions than answers: What is Memory? Why does it exist? How should it work? At times, it felt difficult to show progress because the work was happening through exploration, alignment, and synthesis rather than visible designs.</p>
+        <p style="font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin:0 0 4px;">Learning</p>
+        <p style="font-size:13px; color:var(--body); line-height:1.65; margin:0;">Not every design problem starts with interfaces. Sometimes the most valuable contribution is creating clarity from ambiguity.</p>
+      </div>
+      <div class="r2-key">
+        <span class="r2-key__label">02</span>
+        <p style="font-size:15px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink); margin:0 0 12px; line-height:1.3;">Designing in a moving landscape</p>
+        <p style="font-size:13px; color:var(--body); line-height:1.7; margin:0 0 14px;">While defining Memory, the AI industry was evolving almost weekly. New approaches, capabilities, and terminology were constantly emerging. Waiting for perfect certainty wasn&#8217;t an option. We had to make decisions, establish foundations, and ship while the landscape continued to change.</p>
+        <p style="font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin:0 0 4px;">Learning</p>
+        <p style="font-size:13px; color:var(--body); line-height:1.65; margin:0;">In fast-moving domains, speed and adaptability are as important as design quality. The goal is not to predict the future perfectly, but to build foundations that can evolve with it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ WHAT HAPPENED NEXT ══════════════════ -->
+<div class="next-band fade-up">
+  <div class="next-inner">
+    <div>
+      <span class="next-tag">What happened next</span>
+      <p class="next-title" style="font-size:clamp(18px,2.2vw,28px);">V1 laid the foundation.<br><em>V2 will solve transparency (WIP)</em></p>
+      <p style="margin-top:20px; color:var(--body); max-width:44ch; font-size:var(--text-base); line-height:1.65;">After launch, we expected Phase 2 to focus on conversational memory. Instead, user feedback surfaced a different problem: <strong>analysts couldn&#8217;t see what Spotter already knew.</strong> Transparency and awareness became the sequel &#8212; a separate initiative built on the foundation Memory V1 established.</p>
+      <a href="monitoring-spotter.html" class="next-cta">View Monitoring Spotter &rarr;</a>
+    </div>
+    <div>
+      <div style="background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:clamp(20px,3vw,36px);">
+        <p style="font-family:var(--font-mono); font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:var(--muted); margin-bottom:18px;">The sequel problem</p>
+        <div class="journey">
+          <div class="j-step">
+            <div class="j-rail"><div class="j-dot" style="background:var(--accent); border-color:var(--accent); color:var(--on-accent); font-size:11px;">V1</div></div>
+            <div class="j-body">
+              <h3>Memory Foundations</h3>
+              <p style="font-size:13px;">Architecture, sources, workflows. The system for building memory.</p>
+            </div>
+          </div>
+          <div class="j-step">
+            <div class="j-rail"><div class="j-dot" style="font-size:11px; color:var(--muted);">?</div></div>
+            <div class="j-body" style="padding-bottom:0;">
+              <h3 style="color:var(--muted);">Memory Transparency</h3>
+              <p style="font-size:13px;color:var(--muted);">&#8220;Before you give us more ways to add memory &#8212; show us what&#8217;s already there.&#8221;</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- ── Footer ── -->
+<div class="footer-wrap">
+  <footer class="site-footer">
+    <span class="footer-logo">Umesh Indoriya</span>
+    <span class="footer-copy">&#169;2025 &mdash; Lead UX Designer</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="mailto:umesh.indoriya@thoughtspot.com">Email</a>
+      <a href="#" target="_blank" rel="noopener">LinkedIn &#8599;</a>
+      <a href="../index.html#work">All work</a>
+    </nav>
+  </footer>
+</div>
+
+<script src="../js/site.js"></script>
+<script>
+/* Floating dock magnification */
+(function(){
+  var dock=document.getElementById('fdock'); if(!dock) return;
+  var items=Array.from(dock.querySelectorAll('.fdock__item'));
+  var BASE=52, MAX=76, RANGE=110;
+  dock.addEventListener('mousemove',function(e){
+    items.forEach(function(item){
+      var r=item.getBoundingClientRect();
+      var cx=r.left+r.width/2;
+      var dist=Math.abs(e.clientX-cx);
+      var ratio=Math.max(0,1-dist/RANGE);
+      var size=BASE+(MAX-BASE)*ratio;
+      item.style.setProperty('--dw',size+'px');
+    });
+  });
+  dock.addEventListener('mouseleave',function(){
+    items.forEach(function(item){ item.style.removeProperty('--dw'); });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1126 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#09090b">
+<meta name="description" content="Monitoring Spotter — a case study on giving analysts one place to track, assess, and refine ThoughtSpot's AI analyst after launch.">
+<title>Monitoring Spotter — Umesh Indoriya</title>
+<script>document.documentElement.classList.add('js')</script>
+<link rel="stylesheet" href="../css/design.css">
+<style>
+  /* Dock is at top — push hero content below it */
+  .cs-hero{padding-top:clamp(96px,11vh,136px);}
+  body{padding-bottom:0;}
+  .v2tl{position:relative;max-width:920px;margin:8px auto 0;}
+  .v2tl-row{display:grid;grid-template-columns:210px 1fr;gap:28px;padding-bottom:52px;position:relative;}
+  .v2tl-left{position:sticky;top:96px;align-self:start;display:flex;align-items:center;gap:14px;}
+  .v2tl-dot{width:36px;height:36px;border-radius:50%;background:var(--paper);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1;}
+  .v2tl-dot span{width:12px;height:12px;border-radius:50%;background:var(--faint);transition:background .25s;}
+  .v2tl-row.is-active .v2tl-dot span{background:var(--accent);}
+  .v2tl-title{font-size:18px;font-weight:800;letter-spacing:-.01em;color:var(--muted);transition:color .25s;}
+  .v2tl-row.is-active .v2tl-title{color:var(--ink);}
+  .v2tl-content p{font-size:13.5px;color:var(--body);line-height:1.65;margin:0 0 16px;}
+  .v2tl-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .v2tl-grid--one{grid-template-columns:1fr;}
+  .v2tl-grid img{width:100%;height:180px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#fff;box-shadow:0 1px 2px rgba(20,20,26,.05),0 14px 44px rgba(20,20,26,.07);}
+  .v2tl-grid--one img{height:auto;max-height:440px;object-fit:contain;padding:10px;}
+  .v2tl::before{content:'';position:absolute;left:17px;top:6px;bottom:40px;width:2px;background:var(--line);}
+  .v2tl-beam{position:absolute;left:17px;top:6px;width:2px;height:0;border-radius:2px;background:linear-gradient(to bottom,var(--accent),#8b7bf0);box-shadow:0 0 12px rgba(91,75,214,.35);}
+  @media(max-width:760px){
+    .v2tl-row{grid-template-columns:1fr;gap:10px;}
+    .v2tl-left{position:relative;top:0;margin-bottom:6px;}
+    .v2tl-content{padding-left:50px;}
+    .v2tl-grid img{height:140px;}
+  }
+
+  /* ── IA Annotated Screenshot ─────────────────────────────────── */
+  .ia-annotate{display:grid;grid-template-columns:300px 1fr;gap:48px;align-items:start;margin-top:40px;}
+  .ia-screen-wrap{position:relative;}
+  .ia-screen-crop{
+    width:280px;height:700px;
+    background-color:#1a1e2e;
+    background-image:url('../images/19-all-chats-nav.png');
+    background-size:1400px auto;background-position:0 0;background-repeat:no-repeat;
+    border-radius:10px;
+    box-shadow:0 2px 24px rgba(20,20,26,.14);
+    position:relative;
+  }
+  .ia-badge{
+    position:absolute;width:24px;height:24px;border-radius:50%;
+    background:#f59e0b;color:#fff;font-size:11px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 0 3px rgba(245,158,11,.28),0 2px 8px rgba(0,0,0,.28);
+    transform:translate(-50%,-50%);
+  }
+  .ia-screen-cap{font-size:11px;color:var(--muted);text-align:center;margin-top:10px;letter-spacing:.3px;}
+  .ia-legend{display:flex;flex-direction:column;gap:20px;padding-top:4px;}
+  .ia-leg-row{display:flex;gap:16px;align-items:start;}
+  .ia-leg-badge{width:28px;height:28px;border-radius:50%;background:#f59e0b;color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+  .ia-leg-body strong{font-size:15px;font-weight:800;color:var(--ink);display:block;margin-bottom:6px;}
+  .ia-leg-body p{font-size:14px;color:var(--body);line-height:1.55;margin:0;}
+  .ia-leg-note{background:var(--faint);border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:14px 16px;font-size:13px;color:var(--body);line-height:1.5;margin-top:4px;}
+  .ia-leg-note .tag{display:inline-block;margin-bottom:8px;}
+  @media(max-width:800px){.ia-annotate{grid-template-columns:1fr;}}
+
+  /* ── Journey timeline — consistent inner blocks (shared with v2tl) ── */
+  .v2tl-content .tl-chips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 0;}
+  .v2tl-content .tl-chip{font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:.08em;background:var(--paper);color:var(--muted);border:1px solid var(--line-2);border-radius:3px;padding:5px 12px;text-transform:uppercase;}
+  .v2tl-content .tl-arrow{align-self:center;color:var(--muted);font-size:13px;}
+  .v2tl-content .tl-callout{background:var(--paper);border:1px solid var(--line-2);border-left:2px solid var(--accent);border-radius:var(--radius);padding:16px 20px;margin-top:12px;}
+  .v2tl-content .tl-callout + .tl-callout{margin-top:10px;}
+  .v2tl-content .tl-clabel{font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:8px;}
+  .v2tl-content .tl-callout h4{font-family:var(--font-head);font-size:15px;font-weight:500;text-transform:uppercase;letter-spacing:.02em;margin:0 0 6px;color:var(--ink);}
+  .v2tl-content .tl-callout p{font-size:13px;color:var(--body);line-height:1.6;margin:0;}
+  .v2tl-content .tl-tree{font-family:var(--font-mono);font-size:12px;line-height:1.9;color:var(--body);background:var(--paper);border:1px solid var(--line-2);border-radius:var(--radius);padding:14px 18px;margin-top:12px;}
+  .v2tl-content .tl-steps{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .v2tl-content .tl-step{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--body);}
+  .v2tl-content .tl-step-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-family:var(--font-mono);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .v2tl-content .tl-scope-label{font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin:0 0 8px;}
+  .v2tl-content .tl-scope + .tl-scope{margin-top:16px;border-top:1px solid var(--line);padding-top:16px;}
+  .v2tl-grid{margin-top:28px;}
+
+  /* ── Torch / flashlight hero (white inverted spotlight) ─────────── */
+  .torch{position:relative;min-height:100vh;background:#050506;overflow:hidden;cursor:none;isolation:isolate;}
+  .torch *{cursor:none;}
+  /* the pure-white torch disc that follows the cursor */
+  .torch-spot{position:absolute;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(circle var(--torch-r,165px) at var(--mx,74%) var(--my,40%),
+      #ffffff 0%,#ffffff 98%,rgba(255,255,255,0) 99%);
+    transition:opacity .25s;}
+  .torch.is-out .torch-spot{opacity:0;}
+  /* scattered items — dark ink, masked so they only appear inside the white disc */
+  .torch-scatter{position:absolute;inset:0;z-index:2;pointer-events:none;
+    -webkit-mask:radial-gradient(circle var(--torch-r,165px) at var(--mx,74%) var(--my,40%),#000 0%,#000 97%,transparent 98%);
+            mask:radial-gradient(circle var(--torch-r,165px) at var(--mx,74%) var(--my,40%),#000 0%,#000 97%,transparent 98%);}
+  .torch.is-out .torch-scatter{opacity:0;}
+  .torch-item{position:absolute;transform:translate(-50%,-50%);text-align:center;font-weight:800;letter-spacing:-.01em;line-height:1.15;user-select:none;}
+  .torch-item--chip{background:#d6322b;color:#fff;border-radius:50%;width:118px;height:118px;display:flex;align-items:center;justify-content:center;font-size:14px;padding:10px;}
+  .torch-item--note{font-size:16px;font-weight:700;color:#14141a;max-width:240px;}
+  /* always-visible headline — blend-inverts over the white disc so it stays readable */
+  .torch-fixed{position:relative;z-index:3;pointer-events:none;max-width:1100px;margin:0 auto;
+    padding:clamp(120px,18vh,220px) clamp(24px,6vw,80px) 0;mix-blend-mode:difference;}
+  .torch-ey{font-size:11px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:#7a7975;margin:0 0 26px;}
+  .torch-h1{font-size:clamp(40px,6.4vw,94px);font-weight:800;letter-spacing:-.02em;line-height:.98;color:#fff;margin:0;text-transform:uppercase;}
+  .torch-sub{font-size:clamp(20px,3vw,34px);font-weight:400;color:#cfcecb;margin:18px 0 0;letter-spacing:-.01em;}
+  .torch-hint{position:absolute;left:50%;bottom:42px;transform:translateX(-50%);z-index:3;pointer-events:none;
+    font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#56554f;display:flex;align-items:center;gap:10px;}
+  .torch-hint .torch-dot{width:7px;height:7px;border-radius:50%;background:#d6322b;animation:torchPulse 1.8s ease-in-out infinite;}
+  @keyframes torchPulse{0%,100%{opacity:.3;}50%{opacity:1;}}
+  @media(max-width:760px){
+    .torch{min-height:auto;padding-bottom:60px;cursor:auto;}
+    .torch *{cursor:auto;}
+    .torch-spot,.torch-hint{display:none;}
+    .torch-fixed{mix-blend-mode:normal;}
+    .torch-scatter{position:relative;display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:30px 20px 0;
+      -webkit-mask:none;mask:none;}
+    .torch-item{position:static;transform:none;}
+    .torch-item--note{color:#c9c8c4;}
+  }
+
+  /* ════════════════════════════════════════════════════════════════
+     V2 DESIGN KIT — minimal, single-colour (red / white / black).
+     Scoped to [] so V1 is untouched. Re-themes the
+     accent to red, flattens cards, and tightens section headers.
+     ════════════════════════════════════════════════════════════════ */
+  []{ --accent:#E0301E; --accent-2:#b31d10; --accent-soft:#fdecea; --accent-line:#f1c7c2; }
+  /* wide section headers — run across the space, never a tall narrow block */
+  .s-head h2{ font-size:clamp(28px,3.4vw,44px); max-width:30ch; line-height:1.08; letter-spacing:-.02em; }
+  .s-head__top .s-num{ color:var(--accent); }
+  /* flat minimal cards */
+  .card{ background:#fff; border:1px solid var(--line); border-radius:8px; box-shadow:none; }
+  .card-label{ color:var(--accent); }
+
+  /* ── R2 hierarchy components (used inside V2 slides) ── */
+  /* before → after evolution band (the primary focal block) */
+  .r2-evolve{display:grid;grid-template-columns:1fr 56px 1.2fr;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;margin-top:4px;}
+  .r2-cell{padding:clamp(22px,2.8vw,34px);}
+  .r2-cell--from{background:#faf9f7;}
+  .r2-cell--to{background:#fff;box-shadow:inset 4px 0 0 #E0301E;}
+  .r2-arrow{display:flex;align-items:center;justify-content:center;background:#faf9f7;color:#E0301E;font-size:20px;border-left:1px solid var(--line);border-right:1px solid var(--line);}
+  .r2-elabel{display:block;font-size:11px;letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:14px;color:#9a9a93;}
+  .r2-cell--to .r2-elabel{color:#E0301E;}
+  .r2-cell p{margin:0;font-size:15px;line-height:1.55;color:var(--ink);}
+  .r2-cell--from p{color:#76756f;}
+  .r2-flow{font-weight:800 !important;font-size:clamp(18px,2.1vw,24px) !important;letter-spacing:-.01em;margin-top:12px !important;color:var(--ink) !important;}
+  /* secondary supporting row (de-emphasised, sits below the primary) */
+  .r2-sub{display:grid;grid-template-columns:1.55fr 1fr;gap:16px;margin-top:16px;}
+  .r2-sub .card{background:#faf9f7;}
+  .r2-sub .card-label{color:#9a9a93;}
+  /* header + visual paired across the width (kills dead space) */
+  .r2-split{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,4.5vw,64px);align-items:center;margin-bottom:clamp(30px,5vh,56px);}
+  .r2-lead .s-head__top{display:flex;align-items:baseline;gap:14px;margin-bottom:16px;}
+  .r2-lead h2{font-size:clamp(30px,3.6vw,48px);line-height:1.04;letter-spacing:-.02em;margin:0;max-width:none;font-weight:800;}
+  .r2-diagram{background:#fff;border:1px solid var(--line);border-radius:12px;padding:clamp(18px,2.4vw,28px);}
+  /* orientation (small/secondary) vs the gap (large/primary) */
+  .r2-context{display:grid;grid-template-columns:1fr 1.5fr;gap:16px;align-items:start;}
+  .r2-facts{display:grid;gap:16px;}
+  .card--mini{padding:18px 20px !important;background:#faf9f7;}
+  .card--mini .card-label{color:#9a9a93;}
+  .card--mini p{margin:0;font-size:14px;line-height:1.5;}
+  .r2-gap{border:1px solid var(--accent-line) !important;box-shadow:inset 4px 0 0 #E0301E;}
+  /* card-free key points — left stack vs the gap (no card chrome) */
+  .r2-keys{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,5vw,72px);margin:clamp(28px,4.5vh,48px) 0;align-items:start;}
+  .r2-keys__col{display:grid;gap:clamp(22px,3vh,34px);align-content:start;}
+  .r2-key{border-top:2px solid var(--ink);padding-top:14px;}
+  .r2-key--accent{border-top-color:#E0301E;}
+  .r2-key__label{display:block;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#9a9a93;margin-bottom:10px;}
+  .r2-key--accent .r2-key__label{color:#E0301E;}
+  .r2-keys p{margin:0;font-size:15px;line-height:1.6;color:var(--body);}
+  /* full-width supporting diagram (sits at the bottom of a slide) */
+  .r2-diagram-wide{margin-top:6px;}
+  .r2-diagram-wide svg{width:100%;max-width:740px;display:block;}
+  .r2-diagram-cap{font-size:13px;color:var(--muted);margin:14px 0 0;}
+  /* context slide — two-column table layout */
+  .ctx-title{font-size:clamp(22px,2.8vw,36px);font-weight:700;letter-spacing:.06em;text-transform:uppercase;line-height:1.2;margin:0 0 clamp(20px,3vh,32px);}
+  .ctx-gap-img{filter:invert(1);}
+  .ctx-row{display:grid;grid-template-columns:220px 1fr;gap:clamp(24px,3vw,48px);padding:clamp(20px,3vh,32px) 0;border-top:1px solid var(--line);}
+  .ctx-row:last-of-type{border-bottom:1px solid var(--line);}
+  .ctx-row__label{font-family:var(--font-head);font-size:16px;font-weight:700;letter-spacing:-.01em;text-transform:uppercase;color:var(--muted);line-height:1.2;padding-top:2px;}
+  .ctx-row__content{font-size:15px;line-height:1.65;color:var(--body);}
+  .ctx-row__content p{margin:0;}
+  .ctx-indent{margin-top:16px;padding:14px 18px;border-left:2px solid var(--accent);margin-left:0;}
+  .ctx-indent__label{font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin:0 0 10px;display:block;}
+  .ctx-row__content--with-img{display:flex;gap:clamp(20px,3vw,40px);align-items:center;}
+  .ctx-gap-img{flex-shrink:0;width:clamp(240px,38%,380px);object-fit:contain;margin-left:clamp(16px,2vw,32px);}
+  @media(max-width:680px){.ctx-row{grid-template-columns:1fr;gap:10px;} .ctx-row__content--with-img{flex-direction:column;} .ctx-gap-img{width:100%;}}
+  /* ── Mobile: 5-card column grid → 2 columns, last card full-width ── */
+  @media(max-width:680px){
+    .sol-col-grid{grid-template-columns:repeat(2,1fr) !important;}
+    .sol-col-grid > div:last-child{grid-column:1/-1;}
+  }
+  @media(max-width:860px){
+    .r2-split{grid-template-columns:1fr;gap:24px;}
+    .r2-context{grid-template-columns:1fr;}
+    .r2-keys{grid-template-columns:1fr;gap:28px;}
+  }
+
+  /* clean numbered list — no cards (process / steps) */
+  .r2-list{margin-top:8px;border-top:1px solid var(--line);}
+  .r2-list__row{display:grid;grid-template-columns:60px 1fr 1.3fr;gap:clamp(20px,4vw,56px);align-items:start;padding:clamp(22px,3vh,34px) 0;border-bottom:1px solid var(--line);}
+  .r2-list__num{font-size:15px;font-weight:700;color:#c2c1ba;font-variant-numeric:tabular-nums;}
+  .r2-list__title{font-size:clamp(17px,1.9vw,22px);font-weight:800;letter-spacing:-.015em;color:var(--ink);}
+  .r2-list__desc{font-size:14.5px;line-height:1.62;color:var(--body);margin:0;}
+  .r2-list__row--accent .r2-list__num{color:#E0301E;}
+  /* clean column key-points — no cards (rule on top, label, text) */
+  .r2-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(22px,3vw,44px);margin-top:8px;}
+  .r2-cols--2{grid-template-columns:1fr 1fr;}
+  .r2-cols__item{border-top:2px solid var(--ink);padding-top:16px;}
+  .r2-cols__item--accent{border-top-color:#E0301E;}
+  .r2-cols__label{display:block;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#9a9a93;margin-bottom:10px;}
+  .r2-cols__item--accent .r2-cols__label{color:#E0301E;}
+  .r2-cols p{margin:0;font-size:14px;line-height:1.6;color:var(--body);}
+  /* annotated screenshot split — numbered list (left) + screenshot (right) */
+  .r2-iasplit{display:grid;grid-template-columns:1fr 300px;gap:clamp(32px,5vw,72px);align-items:start;margin-top:4px;}
+  .r2-iasplit__media{display:flex;justify-content:flex-end;}
+  /* tight 2-column list variant: [num] [title over desc] */
+  .r2-list--tight .r2-list__row{grid-template-columns:52px 1fr;gap:18px;align-items:start;}
+  .r2-list--tight .r2-list__num{color:#E0301E;}
+  .r2-list--tight .r2-list__desc{margin-top:6px;}
+  /* V2 theme clean-ups: keep everything red / white / black */
+  .ia-badge,.ia-leg-badge{background:#E0301E;box-shadow:0 0 0 3px rgba(224,48,30,.22),0 2px 8px rgba(0,0,0,.28);}
+  .ia-leg-note{border-left-color:#E0301E;}
+  .tag-green{background:#fdecea;color:#b31d10;}
+  [] ul.bullets.green li::before{background:#14141a;}
+
+  /* ── Torch panel (contained flashlight-in-the-dark block) ── */
+  .torch2{position:relative;height:clamp(360px,54vh,540px);background:#050506;border-radius:14px;overflow:hidden;cursor:none;margin-top:clamp(28px,4vh,44px);}
+  .torch2 *{cursor:none;}
+  .torch2-spot{position:absolute;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(circle var(--torch-r,150px) at var(--mx,50%) var(--my,50%),#fff 0%,#fff 98%,rgba(255,255,255,0) 99%);transition:opacity .25s;}
+  .torch2.is-out .torch2-spot{opacity:0;}
+  .torch2-scatter{position:absolute;inset:0;z-index:2;pointer-events:none;
+    -webkit-mask:radial-gradient(circle var(--torch-r,150px) at var(--mx,50%) var(--my,50%),#000 0%,#000 97%,transparent 98%);
+            mask:radial-gradient(circle var(--torch-r,150px) at var(--mx,50%) var(--my,50%),#000 0%,#000 97%,transparent 98%);}
+  .torch2.is-out .torch2-scatter{opacity:0;}
+  .torch2-item{position:absolute;transform:translate(-50%,-50%);text-align:center;font-weight:800;letter-spacing:-.01em;line-height:1.15;user-select:none;}
+  .torch2-item--chip{background:#d6322b;color:#fff;border-radius:50%;width:104px;height:104px;display:flex;align-items:center;justify-content:center;font-size:12.5px;padding:8px;}
+  .torch2-item--note{color:#14141a;font-size:15px;font-weight:700;max-width:220px;}
+  .torch2-label{position:absolute;left:22px;top:18px;z-index:3;pointer-events:none;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#fff;mix-blend-mode:difference;}
+  .torch2-hint{position:absolute;left:22px;bottom:18px;z-index:3;pointer-events:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#fff;mix-blend-mode:difference;display:flex;align-items:center;gap:9px;}
+  .torch2-hint .torch2-dot{width:7px;height:7px;border-radius:50%;background:#d6322b;animation:torchPulse 1.8s ease-in-out infinite;}
+  @media(max-width:760px){
+    .torch2{height:auto;cursor:auto;padding:28px 20px;}
+    .torch2 *{cursor:auto;}
+    .torch2-spot,.torch2-hint{display:none;}
+    .torch2-scatter{position:relative;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;-webkit-mask:none;mask:none;}
+    .torch2-item{position:static;transform:none;}
+    .torch2-item--note{color:#c9c8c4;}
+  }
+
+  @media(max-width:760px){
+    .r2-evolve{grid-template-columns:1fr;}
+    .r2-arrow{height:46px;border:none;border-top:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(90deg);}
+    .r2-sub{grid-template-columns:1fr;}
+    .r2-list__row{grid-template-columns:1fr;gap:6px;}
+    .r2-list--tight .r2-list__row{grid-template-columns:52px 1fr;}
+    .r2-cols,.r2-cols--2{grid-template-columns:1fr;}
+    .r2-iasplit{grid-template-columns:1fr;}
+    .r2-iasplit__media{justify-content:flex-start;}
+  }
+
+  /* ─── Solution stack (sticky headers, scrolling bodies) ─────────── */
+  :root{--sol-dock:80px;--sol-bar:96px;}
+  .sol-wrap{padding:0 !important;}
+  .sol-stack{position:relative;}
+  /* nested sections — each card wraps the next so its header stays stuck through all of it */
+  .sol-card{position:relative;}
+  /* Card 3 (last): whole card is sticky so body can't cross its own header.
+     Bar reverts to relative — the sticky position is on the card itself. */
+  .sol-card[data-sol="2"]{position:sticky;z-index:4;background:var(--bg);}
+  .sol-card[data-sol="2"] > .sol-bar{position:relative !important;top:auto !important;}
+  /* Spacer after card 3 gives it scroll-travel distance while "locked" */
+  .sol-spacer{height:55vh;}
+  /* only the BAR sticks; the body scrolls normally underneath it */
+  .sol-bar{
+    position:sticky;
+    top:var(--sol-dock);            /* overridden per-card by JS for accumulation */
+    z-index:5;                      /* always above the bodies scrolling behind it */
+    background:var(--bg);           /* opaque — hides content passing behind it */
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+  .sol-bar__in{
+    max-width:var(--max-w);margin:0 auto;
+    padding-left:var(--pad-x);padding-right:var(--pad-x);
+    padding-top:24px;padding-bottom:24px;
+    min-height:var(--sol-bar);box-sizing:border-box;
+    display:grid;grid-template-columns:64px 1fr 1.3fr;
+    gap:clamp(24px,4vw,56px);align-items:center;
+  }
+  /* lead bar sticks at the very top (top:0) and clears the floating dock with padding,
+     so its opaque bg covers all the way up — no gap for content to peek through */
+  .sol-card[data-sol="0"] > .sol-bar > .sol-bar__in{
+    padding-top:calc(var(--sol-dock) + 22px);
+  }
+  .sol-num{
+    font-family:var(--font-head);font-size:clamp(22px,2.8vw,40px);font-weight:500;
+    letter-spacing:-.01em;color:var(--faint);line-height:1;transition:color .25s;
+  }
+  .sol-card.is-active > .sol-bar .sol-num{color:var(--accent);}
+  .sol-title{
+    font-family:var(--font-head);font-size:clamp(22px,2.8vw,40px);
+    font-weight:600;text-transform:uppercase;letter-spacing:.02em;
+    color:var(--faint);margin:0;line-height:1.1;transition:color .25s;
+  }
+  .sol-card.is-active > .sol-bar .sol-title{color:var(--ink);}
+  .sol-desc{font-size:14px;line-height:1.65;color:var(--faint);margin:0;transition:color .25s;}
+  .sol-card.is-active > .sol-bar .sol-desc{color:var(--body);}
+  .sol-body{position:relative;z-index:1;background:var(--bg);}
+  .sol-body__in{
+    max-width:var(--max-w);margin:0 auto;
+    padding-left:var(--pad-x);padding-right:var(--pad-x);
+    padding-top:clamp(32px,5vh,64px);padding-bottom:clamp(56px,10vh,128px);
+  }
+  .sol-body .cs-img{background:transparent;border-color:transparent;}
+  .accent-labels .ctx-row__label{color:var(--ink);}
+  @media(max-width:760px){
+    :root{--sol-dock:68px;--sol-bar:72px;}
+    .sol-bar__in{grid-template-columns:40px 1fr;gap:16px;min-height:72px;padding-top:16px;padding-bottom:16px;}
+    .sol-desc{display:none;}
+    .sol-title{font-size:14px;}
+  }
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to content</a>
+
+<nav class="site-nav" role="navigation" aria-label="Main">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">Umesh Indoriya</a>
+    <div class="nav-links">
+      <a href="../index.html#work">Work</a>
+      <a href="../index.html#contact">Contact</a>
+    </div>
+    <a href="https://drive.google.com/file/d/1-habwW3CK3mAw6Fsq4u0IPKiehWsFm0N/view?usp=sharing" target="_blank" rel="noopener" style="font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); border:1px solid rgba(255,255,255,0.18); border-radius:100px; padding:8px 18px; text-decoration:none; white-space:nowrap; transition:background .2s, color .2s, border-color .2s;" onmouseover="this.style.borderColor='var(--ink)'; this.style.color='var(--ink)';" onmouseout="this.style.borderColor='rgba(255,255,255,0.18)'; this.style.color='var(--muted)';">Resume ↗</a>
+    <button class="nav-hamburger" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<main id="main">
+
+<!-- ───────── CANDIDATE · TORCH HERO (flashlight-in-the-dark intro) ───────── -->
+
+<!-- Torch hero interaction -->
+<script>
+(function(){
+  var hero=document.getElementById('torch-hero'); if(!hero) return;
+  var raf=null,px=0,py=0;
+  function apply(){ raf=null; hero.style.setProperty('--mx',px+'px'); hero.style.setProperty('--my',py+'px'); }
+  hero.addEventListener('mousemove',function(e){
+    var r=hero.getBoundingClientRect();
+    px=e.clientX-r.left; py=e.clientY-r.top;
+    if(!raf) raf=requestAnimationFrame(apply);
+  });
+  hero.addEventListener('mouseenter',function(){ hero.classList.remove('is-out'); });
+  hero.addEventListener('mouseleave',function(){ hero.classList.add('is-out'); });
+})();
+</script>
+
+<!-- ░░░░░░░░░░ CANDIDATE OPENING SLIDES — added for review, remove the ones not kept ░░░░░░░░░░ -->
+
+<!-- ───────── CANDIDATE · SLIDE 1 (alt hero) ───────── -->
+
+<!-- ───────── CANDIDATE · SLIDE 2 (alt context) ───────── -->
+
+<!-- ───────── CANDIDATE · SLIDE 3 (reframing the challenge) ───────── -->
+
+<!-- ░░░░░░░░░░ END CANDIDATE SLIDES ░░░░░░░░░░ -->
+
+<!-- ══════════════════════════════════════════ HERO ══ -->
+
+<!-- ══════════════════════════════════════════ STAT BAND ══ -->
+
+<!-- ══════════════════════════════════════════ CONTEXT (zig-zag) ══ -->
+
+<!-- ══════════════════════════════════════════ DISCOVERY ══ -->
+
+<!-- ══════════════════════════════════════════ STRATEGY JOURNEY ══ -->
+
+<!-- V1 journey timeline scroll beam -->
+<script>
+(function(){
+  var tl=document.getElementById('v1-journey-timeline'); if(!tl) return;
+  var beam=tl.querySelector('.v2tl-beam');
+  var rows=tl.querySelectorAll('.v2tl-row');
+  function update(){
+    if(!tl.offsetParent) return;
+    var rect=tl.getBoundingClientRect();
+    var trigger=window.innerHeight*0.5;
+    var h=Math.max(0,Math.min(tl.offsetHeight, trigger-rect.top));
+    beam.style.height=h+'px';
+    for(var i=0;i<rows.length;i++){
+      var dot=rows[i].querySelector('.v2tl-dot').getBoundingClientRect();
+      rows[i].classList.toggle('is-active',(dot.top-rect.top)<=h+4);
+    }
+  }
+  window.addEventListener('scroll',update,{passive:true});
+  window.addEventListener('resize',update);
+  document.addEventListener('slidectl:versionchange',update);
+  update();
+})();
+</script>
+
+<!-- ══════════════════════════════════════════ WHAT MONITORING MEANS (journey) ══ -->
+
+<!-- ══════════════════════════════════════════ CURRENT STATE / FRAGMENTATION ══ -->
+
+<!-- ══════════════════════════════════════════ DECISION 1 ══ -->
+
+<!-- ══════════════════════════════════════════ IA EXPLORATION (staggered grid) ══ -->
+
+<!-- ══════════════════════════════════════════ DECISION 2 ══ -->
+
+<!-- ══════════════════════════════════════════ DECISION 3 (comparison) ══ -->
+
+
+<!-- ══════════════════════════════════════════ V1 FLOWS (journey) ══ -->
+
+<!-- ══════════════════════════════════════════ SHIPPED · IA FIX ══ -->
+
+<!-- ══════════════════════════════════════════ SHIPPED · ALL CHATS ══ -->
+
+<!-- ══════════════════════════════════════════ SHIPPED · CONVERSATION DETAIL (zig-zag) ══ -->
+
+<!-- ══════════════════════════════════════════ OUTCOMES ══ -->
+
+<!-- ══════════════════════════════════════════ REFLECTION ══ -->
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  V2 MONITORING  —  alternate version ().       ║
+     ║  Hidden by default via .; shown when the controller   ║
+     ║  switches to V2. Independent copies — editing V2 ≠ touching V1.   ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+
+<!-- ───────── V2 · SLIDE 1 (hero) ───────── -->
+<section class="section section--alt">
+  <div class="wrap">    <div class="cs-hero__label fade-up">
+      <span class="label">Case study</span>
+      <span class="cs-hero__rule"></span>
+      <span class="label" style="color:var(--muted);">ThoughtSpot · AI Analytics</span>
+    </div>
+    <h1 class="fade-up" style="margin:8px 0 0; text-transform:none;">Conversation monitoring system for Analysts</h1>
+    <p class="cs-hero-sub fade-up">Analysts are responsible for Spotter&rsquo;s accuracy, but once it is deployed they have limited visibility into how it performs. I designed a monitoring experience that helps them find important conversations, understand failures, and improve Spotter through coaching.</p>
+    <div class="cs-meta fade-up" style="display:grid;grid-template-columns:repeat(3,auto);row-gap:clamp(20px,3vh,32px);column-gap:clamp(32px,5vw,72px);justify-content:start;">
+      <div class="cs-meta-item"><p class="meta-label">Role</p><p class="meta-val">Product Designer</p></div>
+      <div class="cs-meta-item"><p class="meta-label">Scope</p><p class="meta-val">IA &middot; End-to-End UX Design</p></div>
+      <div></div>
+      <div class="cs-meta-item"><p class="meta-label">Users</p><p class="meta-val">Analysts</p></div>
+      <div class="cs-meta-item"><p class="meta-label">Timeline</p><p class="meta-val">8 Weeks</p></div>
+      <div class="cs-meta-item"><p class="meta-label">Team</p><p class="meta-val">PM &middot; Engineering</p></div>
+    </div>
+
+    <div class="card fade-up" style="margin-top:clamp(24px,3.5vh,40px); padding:clamp(18px,2.4vw,28px); border-left:3px solid var(--accent); border-radius:0;">
+      <span class="card-label" style="margin-bottom:8px; display:block;">Project context</span>
+      <p style="font-size:13px; color:#fff; line-height:1.7; margin:0 0 10px;">Once Spotter was deployed, analysts had no clear way to understand whether it was succeeding. Questions about adoption, answer quality, user trust, and configuration effectiveness required navigating multiple disconnected tools and datasets.</p>
+      <p style="font-size:13px; color:#fff; line-height:1.7; margin:0 0 10px;">Without visibility, improving Spotter became reactive and difficult to scale.</p>
+      <p style="font-size:13px; color:#fff; line-height:1.7; margin:0;">Monitoring created a single destination for understanding AI performance, identifying opportunities for improvement, and continuously refining the assistant over time.</p>
+
+      <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--line);">
+        <span class="card-label" style="margin-bottom:12px; display:block;">Project deliverables</span>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:clamp(12px,2vw,24px);">
+          <div>
+            <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 4px;">Solved IA</p>
+            <p style="font-size:12px; color:var(--muted); line-height:1.6; margin:0;">Brought all Spotter activities under one consolidated panel.</p>
+          </div>
+          <div>
+            <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 4px;">Conversation Monitoring</p>
+            <p style="font-size:12px; color:var(--muted); line-height:1.6; margin:0;">Designed end-to-end UX workflow to find, assess, and take action on conversations.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── V2 · SLIDE 2 (context) ───────── -->
+<section class="section">
+  <div class="wrap">
+
+    <h2 class="ctx-title fade-up">Context</h2>
+
+    <div class="ctx-row fade-up">
+      <span class="ctx-row__label">What is Spotter?</span>
+      <div class="ctx-row__content">
+        <p>Spotter is a conversational AI agent that answers business questions in natural language and delivers insights from your data.</p>
+      </div>
+    </div>
+
+    <div class="ctx-row fade-up">
+      <span class="ctx-row__label">Analyst responsibilities</span>
+      <div class="ctx-row__content">
+        <p>Analysts enable, configure and manage Spotter, ensuring it provides accurate, reliable answers to all enterprise business users.</p>
+      </div>
+    </div>
+
+    <div class="ctx-row fade-up">
+      <span class="ctx-row__label">The gap</span>
+      <div class="ctx-row__content ctx-row__content--with-img">
+        <div>
+          <p>Once Spotter is live, analysts lose visibility into:</p>
+          <ul class="bullets" style="margin-top:10px;">
+            <li>What users are asking</li>
+            <li>Which conversations fail</li>
+            <li>Whether users are satisfied</li>
+            <li>How effective current coaching is</li>
+            <li>What should be improved next</li>
+          </ul>
+        </div>
+        <img class="ctx-gap-img" src="../images/Analesy need 2 1.png" alt="Analyst enables AI Agent (Spotter) for Business Users — analyst has no visibility into what's happening"/>
+      </div>
+    </div>
+
+    <div class="ctx-row fade-up">
+      <span class="ctx-row__label">Initial brief</span>
+      <div class="ctx-row__content">
+        <p>Create a surface where analysts can view Spotter conversations.</p>
+        <div class="ctx-indent">
+          <p class="ctx-indent__label">With research, we noticed analysts also needed to:</p>
+          <ul class="bullets" style="margin-top:8px;">
+            <li>Find conversations that required attention</li>
+            <li>Understand what went wrong</li>
+            <li>Decide what action to take</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="ctx-row fade-up">
+      <span class="ctx-row__label">Updated brief</span>
+      <div class="ctx-row__content">
+        <p>Design a workflow that helps analysts find, review, and improve Spotter conversations.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── V2 · SLIDE 3 (reframing the challenge) — merged into Slide 2, hidden ───────── -->
+<section class="section section--alt" style="display:none !important">
+  <div class="wrap">    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">02</span><span class="label">Reframing the challenge</span></div>
+      <h2>The brief evolved.</h2>
+    </div>
+
+    <!-- PRIMARY: the brief evolution (initial → reframed) -->
+    <div class="r2-evolve fade-up">
+      <div class="r2-cell r2-cell--from">
+        <span class="r2-elabel">Initial request</span>
+        <p>Create a surface where analysts can view Spotter conversations.</p>
+      </div>
+      <div class="r2-arrow">&rarr;</div>
+      <div class="r2-cell r2-cell--to">
+        <span class="r2-elabel">Reframed challenge</span>
+        <p>Design a workflow that helps analysts:</p>
+        <p class="r2-flow">Find / Observe &rarr; Review &rarr; Act</p>
+      </div>
+    </div>
+
+    <!-- SECONDARY: the why (research) and the result (outcome) -->
+    <div class="r2-sub fade-up">
+      <div class="card">
+        <span class="card-label">Research insight</span>
+        <p>Viewing conversations was necessary, but not sufficient. Analysts needed to:</p>
+        <ul class="bullets" style="margin-top:8px;">
+          <li>Find conversations that required attention</li>
+          <li>Understand what went wrong</li>
+          <li>Decide what action to take</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="card-label">Outcome</span>
+        <p>The solution expanded from a conversation viewer to a monitoring workflow centered around conversation review.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── V2 · SLIDE 4 (journey — vertical timeline) ───────── -->
+<section class="section">
+  <div class="wrap">    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">03</span><span class="label">How we got here</span></div>
+      <h2>Design Journey</h2>
+      <p class="lead">What began as a request to view conversations evolved through research, exploration, and product tradeoffs. Each stage helped define what analysts needed, what monitoring should support, and what was intentionally left out of V1.</p>
+    </div>
+
+    <div class="v2tl fade-up" id="v2-timeline">
+      <div class="v2tl-beam"></div>
+
+      <!-- 01 The brief -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">The brief</h3></div>
+        <div class="v2tl-content">
+          <p>Customers wanted conversation monitoring. Our initial assumption was that visibility alone would solve the problem.</p>
+        </div>
+      </div>
+
+      <!-- 02 Research -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">Research</h3></div>
+        <div class="v2tl-content">
+          <p>Customer calls &middot; Analyst interviews &middot; Customer feedback on Slack &middot; Workflow audit.</p>
+          <div class="tl-chips">
+            <span class="tl-chip">Lacked visibility</span>
+            <span class="tl-chip">No way to spot failures</span>
+            <span class="tl-chip">No coaching direction</span>
+            <span class="tl-chip">Quality stalled</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 03 Competition research -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">Competition research</h3></div>
+        <div class="v2tl-content">
+          <p>Across the multiple enterprise products we reviewed, monitoring followed a similar structure: surface relevant signals, help users understand them, and enable action. This became the framework for defining Spotter&rsquo;s monitoring experience.</p>
+          <div class="tl-chips">
+            <span class="tl-chip">Observe</span>
+            <span class="tl-arrow">&#8594;</span>
+            <span class="tl-chip">Assess</span>
+            <span class="tl-arrow">&#8594;</span>
+            <span class="tl-chip">Act</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 04 Product audit → Additional problem -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">Product audit</h3></div>
+        <div class="v2tl-content">
+          <p>Current Spotter features were fragmented across surfaces &mdash; surfacing a second problem alongside the primary one of defining monitoring.</p>
+          <div class="tl-callout">
+            <span class="tl-clabel">Additional problem</span>
+            <h4>Reduce fragmentation.</h4>
+            <p>Create one home for all Spotter features &mdash; fix the IA.</p>
+          </div>
+          <div class="v2tl-grid">
+            <img loading="lazy" decoding="async" src="../images/08-full-product-flow.png" alt="Full product user flow mapping all monitoring touchpoints">
+            <img loading="lazy" decoding="async" src="../images/09-user-analyst-flow.png" alt="User to analyst signal flow">
+          </div>
+        </div>
+      </div>
+
+      <!-- 05 Ideation -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">Ideation</h3></div>
+        <div class="v2tl-content">
+          <p>Early vision + architecture explorations. Tried to map all Spotter activities under one structure. Explored central vs model-level architecture.</p>
+          <div class="tl-tree">Monitoring<br>&nbsp;&nbsp;&#9500; All Spotter conversations<br>&nbsp;&nbsp;&#9500; Coaching (reference questions, business terms)<br>&nbsp;&nbsp;&#9492; Usage metrics</div>
+          <div class="v2tl-grid">
+            <img loading="lazy" decoding="async" src="../images/10-feature-groupings.png" alt="Feature groupings into clusters">
+            <img loading="lazy" decoding="async" src="../images/11-ia-options-ab.png" alt="Two IA options A and B compared">
+          </div>
+        </div>
+      </div>
+
+      <!-- 06 Two scope decisions -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">Scope decisions</h3></div>
+        <div class="v2tl-content">
+          <div class="tl-callout">
+            <span class="tl-clabel">Decision 1 &middot; IA</span>
+            <h4>Monitoring at central level, not per data model.</h4>
+            <p>Centralising makes it easier to scale &mdash; one surface, all conversations, no duplication per model.</p>
+          </div>
+          <div class="tl-callout">
+            <span class="tl-clabel">Decision 2 &middot; Scope</span>
+            <h4>Coaching removed from V1.</h4>
+            <p>Coaching space was still evolving and confusing &mdash; could cause scalability issues. Focus only on monitoring conversations first.</p>
+          </div>
+          <div class="v2tl-grid v2tl-grid--one">
+            <img loading="lazy" decoding="async" src="../images/15-monitor-central-approach.png" alt="Chosen approach: one account-level monitor spanning every data model">
+          </div>
+        </div>
+      </div>
+
+      <!-- 07 V1 scope -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">V1 scope</h3></div>
+        <div class="v2tl-content">
+          <div class="tl-scope">
+            <span class="tl-scope-label">Scope 1 &middot; Conversation monitoring</span>
+            <div class="tl-steps">
+              <div class="tl-step"><span class="tl-step-num">1</span>Find the right conversation</div>
+              <div class="tl-step"><span class="tl-step-num">2</span>Assess the failure in context</div>
+              <div class="tl-step"><span class="tl-step-num">3</span>Add coaching inline &mdash; no context switch</div>
+            </div>
+          </div>
+          <div class="tl-scope">
+            <span class="tl-scope-label">Scope 2 &middot; Centralised IA</span>
+            <p>Bring all Spotter features &mdash; monitoring, coaching, usage &mdash; into one place in the main sidebar.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 08 Final design -->
+      <div class="v2tl-row">
+        <div class="v2tl-left"><div class="v2tl-dot"><span></span></div><h3 class="v2tl-title">Final design</h3></div>
+        <div class="v2tl-content">
+          <p>Several iterations later &mdash; the shipped design.</p>
+          <div class="tl-chips">
+            <span class="tl-chip">Conversation visibility</span>
+            <span class="tl-chip">Assessment workflow</span>
+            <span class="tl-chip">Centralised IA</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- V2 timeline scroll beam (self-contained; no-op while V2 is hidden) -->
+<script>
+(function(){
+  var tl=document.getElementById('v2-timeline'); if(!tl) return;
+  var beam=tl.querySelector('.v2tl-beam');
+  var rows=tl.querySelectorAll('.v2tl-row');
+  function update(){
+    if(!tl.offsetParent) return; // hidden () → skip
+    var rect=tl.getBoundingClientRect();
+    var trigger=window.innerHeight*0.5;
+    var h=Math.max(0,Math.min(tl.offsetHeight, trigger-rect.top));
+    beam.style.height=h+'px';
+    for(var i=0;i<rows.length;i++){
+      var dot=rows[i].querySelector('.v2tl-dot').getBoundingClientRect();
+      rows[i].classList.toggle('is-active',(dot.top-rect.top)<=h+4);
+    }
+  }
+  window.addEventListener('scroll',update,{passive:true});
+  window.addEventListener('resize',update);
+  document.addEventListener('slidectl:versionchange',update);
+  update();
+})();
+</script>
+
+<!-- ══════════════════════════════════════════ SCOPE — WHAT WE DIDN'T BUILD ══ -->
+<section class="section">
+  <div class="wrap">
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">Scope</span><span class="label">What we didn&rsquo;t build</span></div>
+      <h2>Defining the boundaries of V1</h2>
+      <p class="lead">&ldquo;We explored several directions beyond conversation monitoring. While each addressed real user needs, they expanded the product beyond the core problem we were trying to solve.&rdquo;</p>
+    </div>
+
+    <!-- Exploration table -->
+    <div class="fade-up" style="margin-top:clamp(24px,3vh,40px);overflow-x:auto;">
+      <table style="width:100%;min-width:540px;border-collapse:collapse;font-size:14px;line-height:1.6;">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:10px 16px 10px 0;border-bottom:2px solid currentColor;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;opacity:.6;width:18%;">Exploration</th>
+            <th style="text-align:left;padding:10px 16px;border-bottom:2px solid currentColor;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;opacity:.6;width:36%;">Why we explored it</th>
+            <th style="text-align:left;padding:10px 16px 10px 0;border-bottom:2px solid currentColor;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;opacity:.6;">Why it didn&rsquo;t make V1</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid rgba(0,0,0,.1);">
+            <td style="padding:16px 16px 16px 0;font-weight:700;vertical-align:top;">Benchmarking</td>
+            <td style="padding:16px;vertical-align:top;">Measure whether coaching improves Spotter over time.</td>
+            <td style="padding:16px 0;vertical-align:top;">Required scoring systems, baselines, and long-term evaluation infrastructure.</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(0,0,0,.1);">
+            <td style="padding:16px 16px 16px 0;font-weight:700;vertical-align:top;">Collaboration</td>
+            <td style="padding:16px;vertical-align:top;">Route conversations to domain experts for review.</td>
+            <td style="padding:16px 0;vertical-align:top;">Introduced ownership, assignment, and workflow management complexity.</td>
+          </tr>
+          <tr>
+            <td style="padding:16px 16px 16px 0;font-weight:700;vertical-align:top;">Full auditing</td>
+            <td style="padding:16px;vertical-align:top;">Create a complete record of AI performance and investigation history.</td>
+            <td style="padding:16px 0;vertical-align:top;">Shifted the product toward governance and operations rather than monitoring.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="fade-up" style="margin-top:24px;background:var(--paper);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:24px 28px;">
+      <h3 style="margin:0 0 12px;font-size:clamp(18px,2vw,24px);font-weight:700;letter-spacing:-.01em;color:var(--ink);font-family:var(--font-head);text-transform:uppercase;">The decision</h3>
+      <p style="color:var(--body);font-size:15px;line-height:1.65;margin:0;">These explorations helped us distinguish between valuable opportunities and the core problem that needed solving. Rather than building a governance, benchmarking, or workflow management platform, we focused V1 on a simpler objective: help analysts find important conversations, understand what happened, and take action through coaching.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ───────── V2 · FINAL SOLUTIONS banner ───────── -->
+<section class="" style="padding:clamp(48px,8vh,96px) 0 clamp(40px,6vh,72px); border-top:1px solid var(--line); background:#111115;">
+  <div class="wrap fade-up" style="text-align:center;">
+    <h2 style="font-family:var(--font-head);font-size:clamp(28px,3.4vw,44px);font-weight:800;letter-spacing:-.02em;line-height:1.08;margin:0;color:var(--ink);text-transform:uppercase;text-decoration:underline;text-decoration-color:#e63329;text-underline-offset:6px;text-decoration-thickness:3px;">Final Solutions</h2>
+  </div>
+</section>
+
+<!-- ───────── V2 · SLIDE 5b (shipped · IA fix) ───────── -->
+<section class="section section--alt">
+  <div class="wrap">
+    <div class="r2-iasplit fade-up">
+      <div class="r2-iasplit__text">
+        <div class="s-head">
+          <div class="s-head__top"><span class="s-num">Solution 1</span></div>
+          <h2>Fixing the IA.</h2>
+        </div>
+        <div class="r2-list r2-list--tight">
+          <div class="r2-list__row">
+            <span class="r2-list__num">01</span>
+            <div>
+              <h3 class="r2-list__title">Centralised IA</h3>
+              <p class="r2-list__desc">A single panel for all Spotter activities — scalable as we now look at Spotter across Data Models, rather than within individual Data Models.</p>
+            </div>
+          </div>
+          <div class="r2-list__row">
+            <span class="r2-list__num">02</span>
+            <div>
+              <h3 class="r2-list__title">Monitor Spotter</h3>
+              <p class="r2-list__desc">Usage metrics is the Liveboard itself. All Chats is what we designed from scratch. Both now live here, inside the analyst workflow.</p>
+            </div>
+          </div>
+          <div class="r2-list__row">
+            <span class="r2-list__num">03</span>
+            <div>
+              <h3 class="r2-list__title">Coach Spotter</h3>
+              <p class="r2-list__desc">Reference questions and Business terms were already in this panel, grouped together. Surfacing them under Coach Spotter made the consolidation intentional — analysts now access all things Spotter from one place, even across separate jobs.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="r2-iasplit__media">
+        <div class="ia-screen-wrap" style="position:relative;display:inline-block;width:100%;">
+          <img src="../images/19-all-chats-nav.png" alt="ThoughtSpot sidebar — Monitor Spotter shipped"
+               style="width:100%;display:block;border-radius:10px;box-shadow:0 2px 24px rgba(20,20,26,.14);"
+               onerror="this.style.opacity='.3'">
+          <p class="ia-screen-cap">Data workspace &mdash; side panel</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── V2 · SHIPPED ACCORDION (slides 6–7 merged, sticky-scroll nested) ───────── -->
+<!-- ───────── V2 · SHIPPED CARD STACK ───────── -->
+<section class="sol-wrap">
+
+  <!-- Section intro -->
+  <div class="wrap fade-up" style="padding-top:clamp(48px,8vh,96px);padding-bottom:clamp(40px,6vh,72px);border-bottom:1px solid var(--line);">
+    <div class="s-head__top" style="margin-bottom:clamp(12px,1.5vh,20px);"><span class="s-num">Solution 2</span></div>
+    <h2 style="font-family:var(--font-head);font-size:clamp(28px,3.4vw,44px);font-weight:800;letter-spacing:-.02em;line-height:1.08;margin:0;color:var(--ink);">Monitoring conversation</h2>
+  </div>
+
+  <div class="sol-stack">
+
+    <!-- ── Card 1: Find ── (wraps 2 & 3 so its header stays stuck through both) -->
+    <div class="sol-card" data-sol="0">
+      <div class="sol-bar">
+        <div class="sol-bar__in">
+          <span class="sol-num">01</span>
+          <h2 class="sol-title">Find the right conversation</h2>
+          <p class="sol-desc">Out of hundreds, get the analyst to the one that needs attention — fast, without opening each one.</p>
+        </div>
+      </div>
+      <div class="sol-body">
+        <div class="sol-body__in">
+          <div class="fade-up" style="margin-bottom:clamp(20px,3vh,32px);">
+            <img class="cs-img sol-img" decoding="async" src="../images/17-all-chats.png" alt="All chats — the shipped conversation list screen"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="ph-slot" style="display:none;"><div class="ph-ico">📋</div><strong>All chats — shipped screen</strong>Save as <code>images/17-all-chats.png</code></div>
+          </div>
+          <div class="fade-up" style="padding-top:clamp(16px,2.5vh,24px);">
+            <span class="eyebrow" style="flex-shrink:0;white-space:nowrap;">Columns earn their place</span>
+          </div>
+          <div class="sol-col-grid fade-up" style="display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-top:clamp(24px,3vh,40px);">
+            <div style="background:var(--bg);padding:20px 18px;"><span style="font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:0;color:#fff;background:var(--accent);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;flex-shrink:0;">1</span><h4 style="font-family:var(--font-head);font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--ink);margin:0 0 10px;">Conversation</h4><ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;"><li style="font-size:13px;color:var(--body);line-height:1.55;">Understand user intent.</li><li style="font-size:13px;color:var(--body);line-height:1.55;">Search for relevant conversations.</li></ul></div>
+            <div style="background:var(--bg);padding:20px 18px;"><span style="font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:0;color:#fff;background:var(--accent);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;flex-shrink:0;">2</span><h4 style="font-family:var(--font-head);font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--ink);margin:0 0 10px;">Follow-ups</h4><ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;"><li style="font-size:13px;color:var(--body);line-height:1.55;">Signal uncertainty or unresolved answers.</li><li style="font-size:13px;color:var(--body);line-height:1.55;">Highlight conversations worth reviewing.</li></ul></div>
+            <div style="background:var(--bg);padding:20px 18px;"><span style="font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:0;color:#fff;background:var(--accent);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;flex-shrink:0;">3</span><h4 style="font-family:var(--font-head);font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--ink);margin:0 0 10px;">Feedback</h4><ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;"><li style="font-size:13px;color:var(--body);line-height:1.55;">Direct indicator of user satisfaction.</li><li style="font-size:13px;color:var(--body);line-height:1.55;">Prioritize conversations needing attention.</li></ul></div>
+            <div style="background:var(--bg);padding:20px 18px;"><span style="font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:0;color:#fff;background:var(--accent);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;flex-shrink:0;">4</span><h4 style="font-family:var(--font-head);font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--ink);margin:0 0 10px;">Data model</h4><ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;"><li style="font-size:13px;color:var(--body);line-height:1.55;">Focus on owned areas.</li><li style="font-size:13px;color:var(--body);line-height:1.55;">Reduce investigation noise.</li></ul></div>
+            <div style="background:var(--bg);padding:20px 18px;"><span style="font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:0;color:#fff;background:var(--accent);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;flex-shrink:0;">5</span><h4 style="font-family:var(--font-head);font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--ink);margin:0 0 10px;">User &amp; recency</h4><ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;"><li style="font-size:13px;color:var(--body);line-height:1.55;">Narrow investigations by user or timeframe.</li><li style="font-size:13px;color:var(--body);line-height:1.55;">Validate outcomes after coaching updates.</li></ul></div>
+          </div>
+          <div class="accent-labels fade-up" style="margin-top:clamp(40px,6vh,72px);">
+            <span class="eyebrow" style="margin-bottom:20px;">Solved use cases</span>
+            <div class="ctx-row"><span class="ctx-row__label">Exploratory</span><div class="ctx-row__content"><p>Analyst arrives without a lead. Signal-rich columns — feedback type, category, conversation length, thumbs — surface what deserves attention before opening a single chat.</p></div></div>
+            <div class="ctx-row" style="border-bottom:1px solid var(--line);"><span class="ctx-row__label">Targeted</span><div class="ctx-row__content"><p>Analyst has a topic or chat reference in mind. Search works inside conversations, not just titles — so a specific question surfaces even if it never made it into the chat name.</p></div></div>
+          </div>
+        </div><!-- /Find body__in -->
+
+        <!-- ── Card 2: Assess ── (nested; wraps 3) -->
+        <div class="sol-card" data-sol="1">
+          <div class="sol-bar">
+            <div class="sol-bar__in">
+              <span class="sol-num">02</span>
+              <h2 class="sol-title">Assess the conversation</h2>
+              <p class="sol-desc">Show the full thread, the answer Spotter gave, and the user's feedback — in context, so the failure is legible.</p>
+            </div>
+          </div>
+          <div class="sol-body">
+            <div class="sol-body__in">
+              <div class="fade-up" style="margin-bottom:clamp(24px,3vh,40px);">
+                <img class="cs-img sol-img" decoding="async" src="../images/18-conversation-detail.png" alt="Conversation detail — the shipped detail view"
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                <div class="ph-slot" style="display:none;"><div class="ph-ico">💬</div><strong>Conversation detail — shipped</strong>Save as <code>images/18-conversation-detail.png</code></div>
+              </div>
+              <div class="fade-up" style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:0;">
+                <div style="background:var(--bg);padding:20px 18px;"><span style="font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:0;color:#fff;background:var(--accent);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;flex-shrink:0;">1</span><h4 style="font-family:var(--font-head);font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--ink);margin:0 0 8px;">Complete conversation context</h4><p style="font-size:13px;color:var(--body);line-height:1.6;margin:0;">Analysts can review the same conversation the business user experienced, including Spotter's responses, follow-up questions, and generated charts.</p></div>
+                <div style="background:var(--bg);padding:20px 18px;"><span style="font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:0;color:#fff;background:var(--accent);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;flex-shrink:0;">2</span><h4 style="font-family:var(--font-head);font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--ink);margin:0 0 8px;">Feedback surfaced in context</h4><p style="font-size:13px;color:var(--body);line-height:1.6;margin:0;">User feedback is highlighted directly beneath the answer it refers to, helping analysts quickly identify and assess failures.</p></div>
+              </div>
+              <div class="ctx-row fade-up" style="border-bottom:1px solid var(--line);"><span class="ctx-row__label">Why it matters</span><div class="ctx-row__content"><p>Conversation visibility was the primary request from analysts. Seeing the full interaction helps them understand how users ask questions and where Spotter breaks down.</p><p style="margin-top:10px;">Feedback acts as a shortcut to potential failures, helping analysts focus their investigation without reviewing every message in the thread.</p></div></div>
+            </div><!-- /Assess body__in -->
+
+            <!-- ── Card 3: Act ── (nested, innermost) -->
+            <div class="sol-card" data-sol="2">
+              <div class="sol-bar">
+                <div class="sol-bar__in">
+                  <span class="sol-num">03</span>
+                  <h2 class="sol-title">Take action</h2>
+                  <p class="sol-desc">Add coaching at the point of discovery, without switching tools or losing context.</p>
+                </div>
+              </div>
+              <div class="sol-body">
+                <div class="sol-body__in">
+                  <div class="fade-up" style="margin-bottom:clamp(24px,3vh,40px);">
+                    <img class="cs-img sol-img" decoding="async" src="../images/Take action.png" alt="Take action — add to coaching inline"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="ph-slot" style="display:none;"><div class="ph-ico">⚡</div><strong>Take action — shipped</strong>Save as <code>images/Take action.png</code></div>
+                  </div>
+                  <div class="ctx-row fade-up"><span class="ctx-row__label">What the analyst can do</span><div class="ctx-row__content"><ul class="bullets" style="margin:0;"><li>Save any question-answer mapping directly to coaching.</li><li>Correct an inaccurate response before saving it, turning a failure into a coaching opportunity.</li></ul></div></div>
+                  <div class="ctx-row fade-up" style="border-bottom:1px solid var(--line);"><span class="ctx-row__label">Why it works</span><div class="ctx-row__content"><ul class="bullets" style="margin:0;"><li>Monitoring and coaching become part of the same workflow.</li><li>Analysts can act on issues while the conversation, response, and feedback are still in context.</li><li>Reduces the manual effort of recreating problems and translating findings into coaching.</li></ul></div></div>
+                </div>
+              </div>
+            </div><!-- /Card 3 -->
+            <div class="sol-spacer" aria-hidden="true"></div>
+          </div>
+        </div><!-- /Card 2 -->
+
+      </div>
+    </div><!-- /Card 1 -->
+
+  </div><!-- /sol-stack -->
+
+</section>
+
+<!-- ───────── V2 · SLIDE 8 (expected impact) ───────── -->
+<section class="section">
+  <div class="wrap">
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">08</span><span class="label">Expected impact</span></div>
+      <h2>Expected impact</h2>
+    </div>
+
+    <div class="accent-labels">
+    <div class="ctx-row fade-up">
+      <span class="ctx-row__label">Faster investigation</span>
+      <div class="ctx-row__content">
+        <p>Analysts no longer need to manually sift through conversation logs or recreate failures in Spotter.</p>
+      </div>
+    </div>
+    <div class="ctx-row fade-up">
+      <span class="ctx-row__label">Better prioritization</span>
+      <div class="ctx-row__content">
+        <p>Multiple signals help surface conversations that deserve attention, reducing reliance on manual review.</p>
+      </div>
+    </div>
+    <div class="ctx-row fade-up" style="border-bottom:1px solid var(--line);">
+      <span class="ctx-row__label">Faster improvement loops</span>
+      <div class="ctx-row__content">
+        <p>Issues discovered during monitoring can be converted directly into coaching examples, reducing friction between investigation and action.</p>
+      </div>
+    </div>
+    </div><!-- /accent-labels -->
+  </div>
+</section>
+
+<!-- ───────── V2 · SLIDE 9 (experience & learnings) ───────── -->
+<section class="section">
+  <div class="wrap wrap--narrow">
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">09</span><span class="label">Experience &amp; learnings</span></div>
+      <h2>My experience &amp; learnings</h2>
+    </div>
+
+    <p class="cs-body fade-up">This was my first end-to-end strategic project, spanning product strategy, information architecture, and UX design. What began as a request for conversation visibility evolved into a broader challenge of defining what monitoring should mean for Spotter.</p>
+    <p class="cs-body fade-up" style="margin-top:16px;">As the project progressed, I explored several directions including auditing, benchmarking, and collaboration workflows. While each addressed legitimate user needs, they also expanded the scope beyond the core problem we were trying to solve.</p>
+    <p class="cs-body fade-up" style="margin-top:16px;">The most important lesson was realizing that deeper understanding often leads to simpler solutions. The final experience was significantly more focused than many of the concepts explored along the way, yet it better supported what analysts actually needed: finding issues, understanding them, and improving Spotter.</p>
+
+    <div class="accent-labels" style="margin-top:clamp(40px,6vh,72px);">
+      <div class="ctx-row fade-up">
+        <span class="ctx-row__label">Visibility is not the same as monitoring</span>
+        <div class="ctx-row__content">
+          <p>Exposing conversations was only the starting point. Effective monitoring required helping analysts identify issues, understand them, and take action.</p>
+        </div>
+      </div>
+      <div class="ctx-row fade-up">
+        <span class="ctx-row__label">Exploration is valuable even when it doesn't ship</span>
+        <div class="ctx-row__content">
+          <p>Many of the strongest ideas explored during the project never became part of the final solution. Their value was in helping define the boundaries of the product and clarifying what belonged in V1.</p>
+        </div>
+      </div>
+      <div class="ctx-row fade-up" style="border-bottom:1px solid var(--line);">
+        <span class="ctx-row__label">The workflow mattered more than any individual screen</span>
+        <div class="ctx-row__content">
+          <p>The final solution succeeded because it connected discovery, investigation, and coaching into a single workflow. The value came from reducing friction between these steps, not from any individual feature.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── V2 · SLIDE 10 (what i'd do differently) ───────── -->
+<section class="section section--alt">
+  <div class="wrap wrap--narrow">
+    <div class="s-head fade-up">
+      <div class="s-head__top"><span class="s-num">10</span><span class="label">What I'd do differently</span></div>
+      <h2>What I'd do differently</h2>
+    </div>
+    <p class="label fade-up" style="margin-bottom:clamp(16px,2.5vh,24px);">Exploration creates clarity, but it needs boundaries</p>
+    <p class="cs-body fade-up">Some of the most valuable insights came from ideas that never shipped. Exploring adjacent problems helped us understand the opportunity space and make more informed decisions. However, every new direction increased complexity, expanded scope, and demanded additional time for validation and design. The challenge was knowing when to continue exploring and when to commit to a focused approach.</p>
+  </div>
+</section>
+
+<!-- ── Prev / next ── -->
+<nav class="cs-pagenav" aria-label="Case study navigation">
+  <div class="wrap" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+    <a href="../index.html#work" class="cs-pagenav-link">← Back to work</a>
+    <a href="../work/memory-spotter.html" class="cs-pagenav-link">Next: Memory for Spotter →</a>
+  </div>
+</nav>
+
+</main>
+
+<!-- ── Footer ── -->
+<div class="footer-wrap">
+  <footer class="site-footer">
+    <span class="footer-logo">Umesh Indoriya</span>
+    <span class="footer-copy">©2025 — Lead UX Designer</span>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="mailto:umesh.indoriya@thoughtspot.com">Email</a>
+      <a href="#" target="_blank" rel="noopener">LinkedIn ↗</a>
+    </nav>
+  </footer>
+</div>
+
+<script src="../js/site.js"></script>
+<script>
+/* Solution stack — sticky section headers that accumulate at the top.
+   Only the bars stick; bodies scroll normally and hide behind the bars. */
+(function(){
+  var stack = document.querySelector('.sol-stack');
+  if(!stack) return;
+  var cards = Array.prototype.slice.call(stack.querySelectorAll('.sol-card'));
+  if(!cards.length) return;
+  // each card's OWN bar (direct child, not a nested card's bar)
+  var bars = cards.map(function(c){ return c.querySelector(':scope > .sol-bar'); });
+
+  function dockPx(){
+    var v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sol-dock'));
+    return isNaN(v) ? 80 : v;
+  }
+
+  var tops = [];
+  // Set sticky offsets: bars 0 & 1 get sticky tops (they accumulate).
+  // Card 3 (last) uses whole-card sticky — set top on the card, bar reverts to relative.
+  function layout(){
+    var acc = 0;
+    var last = bars.length - 1;
+    for(var i=0;i<bars.length;i++){
+      tops[i] = acc;
+      if(i < last){
+        bars[i].style.top = acc + 'px';
+        acc += bars[i].offsetHeight;
+      } else {
+        // Whole card 3 sticks here; bar is relative inside it
+        cards[i].style.top = acc + 'px';
+        bars[i].style.position = 'relative';
+        bars[i].style.top = 'auto';
+      }
+    }
+  }
+
+  var lastActive = -2;
+  // The active (currently-reading) card is the deepest whose bar is pinned at its slot.
+  function refreshActive(){
+    var active = -1;
+    for(var i=0;i<bars.length;i++){
+      var top = bars[i].getBoundingClientRect().top;
+      if(Math.abs(top - tops[i]) <= 2) active = i;   // pinned exactly at its slot
+    }
+    if(active !== lastActive){
+      for(var j=0;j<cards.length;j++) cards[j].classList.toggle('is-active', j === active);
+      lastActive = active;
+    }
+  }
+
+  function refresh(){ if(stack.offsetParent){ layout(); refreshActive(); } }
+
+  var ticking=false;
+  window.addEventListener('scroll', function(){
+    if(!ticking){ ticking=true; requestAnimationFrame(function(){ refreshActive(); ticking=false; }); }
+  }, {passive:true});
+  window.addEventListener('resize', refresh);
+  window.addEventListener('load', refresh);
+  document.addEventListener('slidectl:versionchange', function(){ setTimeout(refresh, 60); });
+  cards.forEach(function(c){ var im=c.querySelector('img'); if(im && !im.complete) im.addEventListener('load', refresh); });
+  refresh();
+})();
+
+/* Floating dock magnification */
+(function(){
+  var dock=document.getElementById('fdock'); if(!dock) return;
+  var items=Array.from(dock.querySelectorAll('.fdock__item'));
+  var BASE=48, MAX=76, RANGE=110;
+  dock.addEventListener('mousemove',function(e){
+    items.forEach(function(item){
+      var r=item.getBoundingClientRect();
+      var cx=r.left+r.width/2;
+      var dist=Math.abs(e.clientX-cx);
+      var ratio=Math.max(0,1-dist/RANGE);
+      var size=BASE+(MAX-BASE)*ratio;
+      item.style.setProperty('--dw',size+'px');
+    });
+  });
+  dock.addEventListener('mouseleave',function(){
+    items.forEach(function(item){ item.style.removeProperty('--dw'); });
+  });
+})();
+</script>
+</body>
+</html>
+
+
+

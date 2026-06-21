@@ -130,7 +130,7 @@
   const pathEl   = document.getElementById('clPath');
   if (!jacket || !measure || !textPath || !pathEl) return;
 
-  pathEl.setAttribute('d', 'M-200,52 L1640,52');
+  pathEl.setAttribute('d', 'M-200,36 L1640,36');
   measure.textContent = TEXT;
 
   let spacing = 0, offset = 0, dir = -1, dragging = false, lastX = 0, vel = 0;

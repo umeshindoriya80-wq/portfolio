@@ -62,8 +62,26 @@
   .work-list-card .pc-tags { display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end; }
   .work-list-card .pc-cta { font-size:12px; letter-spacing:2px; }
   @media(max-width:680px){
-    .work-list-card { grid-template-columns:1fr; }
-    .work-list-card .wc-right, .work-list-card .wc-bottom-right { grid-column:1; justify-content:flex-start; align-items:flex-start; }
+    .work-list-card {
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      padding:20px;
+    }
+    .work-list-card .wc-left,
+    .work-list-card .wc-right,
+    .work-list-card .wc-bottom-left,
+    .work-list-card .wc-bottom-right {
+      grid-column:auto;
+      grid-row:auto;
+    }
+    .work-list-card .wc-right,
+    .work-list-card .wc-bottom-right {
+      justify-content:flex-start;
+      align-items:flex-start;
+    }
+    .work-list-card .pc-title { font-size:clamp(20px,6vw,24px); line-height:1.1; }
+    .work-list-card .pc-desc { max-width:none; }
     .work-list-card .pc-tags { justify-content:flex-start; }
   }
 </style>
@@ -88,7 +106,7 @@
   <svg viewBox="0 0 1440 72" id="clSvg">
     <text id="clMeasure" font-size="28" font-family="'Oswald',sans-serif" font-weight="600" letter-spacing="2" style="visibility:hidden;opacity:0;pointer-events:none"></text>
     <defs>
-      <path id="clPath" d="M-200,52 L1640,52" fill="none"/>
+      <path id="clPath" d="M-200,36 L1640,36" fill="none"/>
     </defs>
     <text font-weight="600" font-size="28" font-family="'Oswald',sans-serif" letter-spacing="2" fill="#ffffff">
       <textPath id="clTextPath" href="#clPath" startOffset="0px" xml:space="preserve"></textPath>
